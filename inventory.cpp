@@ -2,7 +2,7 @@
 #include "inventory.h"
 
 using namespace std;
-
+// Inventory
 void addMedicine()
 {
     cout << "Add Medicine" << endl;
