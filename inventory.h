@@ -4,7 +4,9 @@
 
 #include <string>
 
-struct Medicine {
+//
+struct Medicine
+{
     int id;
     std::string name;
     int quantity;
