@@ -3,7 +3,6 @@
 
 using namespace std;
 
-// Inventory
 void addMedicine()
 {
     cout << "Add Medicine" << endl;

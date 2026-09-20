@@ -1,6 +1,15 @@
-#ifndef INVENTORY_H 
+#ifndef INVENTORY_H
 
 #define INVENTORY_H
+
+#include <string>
+
+struct Medicine {
+    int id;
+    std::string name;
+    int quantity;
+    std::string expiryDate;
+};
 
 // Function declaration
 
@@ -10,4 +19,4 @@ void updateMedicine();
 void deleteMedicine();
 void displayInventory();
 
-#endif 
+#endif
