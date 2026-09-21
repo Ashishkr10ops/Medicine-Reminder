@@ -29,18 +29,27 @@ public:
     HashTable();
 
     void insertMedicine(const Medicine &medicine);
+
     Medicine *searchMedicine(int id);
+
     bool updateMedicine(int id, int quantity, const std::string &expiryDate);
+
     bool deleteMedicine(int id);
+
     void displayInventory();
 };
 
 // Inventory module functions
 
-void addMedicine();
-void searchMedicine();
-void updateMedicine();
-void deleteMedicine();
+void insertMedicine();
+
+Medicine* searchMedicine();
+
+bool updateMedicine();
+
+bool deleteMedicine();
+
 void displayInventory();
+
 
 #endif

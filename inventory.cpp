@@ -1,26 +1,83 @@
 #include <iostream>
 #include "inventory.h"
 
-using namespace std;
-
-void addMedicine()
+// Constructor
+HashTable::HashTable()
 {
-    cout << "Add Medicine" << endl;
+
+    for (int i = 0; i < TABLE_SIZE; i++)
+    {
+        table[i] = nullptr;
+    }
 }
 
-void searchMedicine()
+// Hash function
+int HashTable::hashFunction(int id)
 {
-    cout << "Search Medicine" << endl;
+    return id % TABLE_SIZE;
 }
 
-void updateMedicine()
+// Insert medicine
+void HashTable::insertMedicine(const Medicine &medicine)
 {
+
+    int index = hashFunction(medicine.id);
+
+    Node *newNode = new Node;
+    newNode->medicine = medicine;
+    newNode->next = nullptr;
+
+    if (table[index] == nullptr)
+    {
+        table[index] = newNode;
+        return;
+    }
+
+    Node *current = table[index];
+
+    while (current->next != nullptr)
+    {
+        current = current->next;
+    }
+
+    current->next = newNode;
 }
 
-void deleteMedicine()
+// Search medicine
+Medicine *HashTable::searchMedicine(int id)
 {
+
+    int index = hashFunction(id);
+
+    Node *current = table[index];
+
+    while (current != nullptr)
+    {
+
+        if (current->medicine.id == id)
+        {
+            return &current->medicine;
+        }
+
+        current = current->next;
+    }
+
+    return nullptr;
 }
 
-void displayMedicine()
-{
+// Updates quantity and expiry date of a medicine
+bool HashTable::updateMedicine(int id, int quantity, const std::string& expiryDate) {
+    Medicine* medicine = searchMedicine(id);
+
+    // Medicine not found
+    if (medicine == nullptr)
+    {
+        return false;
+    }
+
+    // Update the existing medicine
+    medicine->quantity = quantity;
+    medicine->expiryDate = expiryDate;
+
+    return true;
 }
