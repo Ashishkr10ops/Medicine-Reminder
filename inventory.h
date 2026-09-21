@@ -1,5 +1,4 @@
 #ifndef INVENTORY_H
-
 #define INVENTORY_H
 
 #include <string>
@@ -27,16 +26,13 @@ private:
     int hashFunction(int id);
 
 public:
-    // Constructor
     HashTable();
 
-    // Adds a medicine to the hash table.
     void insertMedicine(const Medicine &medicine);
-    Medicine* searchMedicine(int id);
-    bool updateMedicine(int id, int quantity, const std::string& expiryDate);
+    Medicine *searchMedicine(int id);
+    bool updateMedicine(int id, int quantity, const std::string &expiryDate);
     bool deleteMedicine(int id);
     void displayInventory();
-
 };
 
 // Inventory module functions
