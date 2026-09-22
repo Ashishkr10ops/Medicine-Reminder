@@ -1,19 +1,20 @@
 #include <iostream>
 #include "inventory.h"
+#include "history.h"
 
 int main()
 {
-
     int choice;
 
     do
     {
-        std::cout << "\n===== Medicine Inventory =====\n";
+        std::cout << "\n===== Medicine Reminder System =====\n";
         std::cout << "1. Add Medicine\n";
         std::cout << "2. Search Medicine\n";
         std::cout << "3. Update Medicine\n";
         std::cout << "4. Delete Medicine\n";
         std::cout << "5. Display Inventory\n";
+        std::cout << "6. View History\n";
         std::cout << "0. Exit\n";
 
         std::cout << "Enter your choice: ";
@@ -21,7 +22,6 @@ int main()
 
         switch (choice)
         {
-
         case 1:
             addMedicine();
             break;
@@ -40,6 +40,10 @@ int main()
 
         case 5:
             displayInventory();
+            break;
+
+        case 6:
+            viewHistory();
             break;
 
         case 0:

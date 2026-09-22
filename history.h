@@ -8,33 +8,32 @@ struct History
     std::string operation;
 };
 
-struct Node
+struct HistoryNode
 {
     History history;
-    Node *next;
+    HistoryNode *next;
 };
 
 class HistoryStack
 {
 private:
-    Node *top;
+    HistoryNode *top;
 
 public:
     HistoryStack();
 
     void push(const History &history);
-
     bool pop();
-
-    History *peak();
-
+    History *peek();
     void display();
 };
 
-// User facing functions
+// User-facing functions
 
 void recordOperation();
 
 void viewHistory();
+
+void addHistory(const std::string &operation);
 
 #endif

@@ -1,6 +1,8 @@
 #include "history.h"
 #include <iostream>
 
+HistoryStack historyStack;
+
 // Constructor
 HistoryStack::HistoryStack()
 {
@@ -11,7 +13,7 @@ HistoryStack::HistoryStack()
 void HistoryStack::push(const History &history)
 {
 
-    Node *newNode = new Node;
+    HistoryNode *newNode = new HistoryNode;
 
     newNode->history = history;
     newNode->next = top;
@@ -29,7 +31,7 @@ bool HistoryStack::pop()
         return false;
     }
 
-    Node *temp = top;
+    HistoryNode *temp = top;
 
     top = top->next;
 
@@ -38,10 +40,72 @@ bool HistoryStack::pop()
     return true;
 }
 
-void recordOperation()
+// Returns the top history record without removing it
+History *HistoryStack::peek()
 {
+
+    // Check if the stack is empty
+    if (top == nullptr)
+    {
+        return nullptr;
+    }
+
+    return &top->history;
 }
 
+// Displays all history records
+void HistoryStack::display()
+{
+
+    if (top == nullptr)
+    {
+        std::cout << "History is empty.\n";
+        return;
+    }
+
+    std::cout << "\n===== History =====\n";
+
+    HistoryNode *current = top;
+
+    while (current != nullptr)
+    {
+
+        std::cout << current->history.operation << "\n";
+
+        current = current->next;
+    }
+}
+
+// User facing functions
+
+// Records a new operation in the history
+void recordOperation()
+{
+
+    History history;
+
+    std::cout << "\nEnter operation: ";
+    std::cin.ignore();
+    std::getline(std::cin, history.operation);
+
+    historyStack.push(history);
+
+    std::cout << "Operation recorded successfully.\n";
+}
+
+// Displays the medicine operation history
 void viewHistory()
 {
+
+    historyStack.display();
+}
+
+// Adds an operation to the history stack
+void addHistory(const std::string &operation)
+{
+    History history;
+
+    history.operation = operation;
+
+    historyStack.push(history);
 }

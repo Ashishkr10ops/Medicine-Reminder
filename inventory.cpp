@@ -1,4 +1,5 @@
 #include "inventory.h"
+#include "history.h"
 #include <iostream>
 
 HashTable inventoryTable;
@@ -178,6 +179,9 @@ void addMedicine()
     std::cin >> medicine.expiryDate;
 
     inventoryTable.insertMedicine(medicine);
+
+    // Record the operation in history
+    addHistory("Added medicine: " + medicine.name);
 
     std::cout << "Medicine added successfully.\n";
 }
