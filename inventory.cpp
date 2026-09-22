@@ -13,7 +13,6 @@ HashTable::HashTable()
     }
 }
 
-
 int HashTable::hashFunction(int id)
 {
     return id % TABLE_SIZE;
@@ -150,18 +149,19 @@ void HashTable::displayInventory()
 
             current = current->next;
         }
+    }
 
-        if (isEmpty)
-        {
-            std::cout << "Inventory is empty.\n";
-        }
+    if (isEmpty)
+    {
+        std::cout << "Inventory is empty.\n";
     }
 }
 
 // User-facing functions
 
 // Adds a new medicine to the inventory
-void addMedicine() {
+void addMedicine()
+{
 
     Medicine medicine;
 
@@ -183,16 +183,18 @@ void addMedicine() {
 }
 
 // Searches for a medicine using its ID
-void searchMedicine() {
+void searchMedicine()
+{
 
     int id;
 
     std::cout << "\nEnter Medicine ID to search: ";
     std::cin >> id;
 
-    Medicine* medicine = inventoryTable.searchMedicine(id);
+    Medicine *medicine = inventoryTable.searchMedicine(id);
 
-    if (medicine == nullptr) {
+    if (medicine == nullptr)
+    {
         std::cout << "Medicine not found.\n";
         return;
     }
@@ -205,7 +207,8 @@ void searchMedicine() {
 }
 
 // Updates an existing medicine
-void updateMedicine() {
+void updateMedicine()
+{
 
     int id;
     int quantity;
@@ -233,7 +236,8 @@ void updateMedicine() {
 }
 
 // Deletes a medicine from the inventory
-void deleteMedicine() {
+void deleteMedicine()
+{
 
     int id;
 
