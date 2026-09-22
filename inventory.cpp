@@ -252,6 +252,10 @@ void deleteMedicine()
 
     if (deleted)
     {
+
+        // Record the operation in history
+        addHistory("Deleted medicine ID: " + std::to_string(id));
+
         std::cout << "Medicine deleted successfully.\n";
     }
     else
