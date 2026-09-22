@@ -1,7 +1,9 @@
-#include <iostream>
 #include "inventory.h"
+#include <iostream>
 
-// Constructor
+HashTable inventoryTable;
+
+// HashTable functions
 HashTable::HashTable()
 {
 
@@ -11,7 +13,7 @@ HashTable::HashTable()
     }
 }
 
-// Hash function
+
 int HashTable::hashFunction(int id)
 {
     return id % TABLE_SIZE;
@@ -124,17 +126,20 @@ bool HashTable::deleteMedicine(int id)
 }
 
 // Displays all medicines in the inventory
-void HashTable::displayInventory() {
+void HashTable::displayInventory()
+{
 
     bool isEmpty = true;
 
     std::cout << "\n===== Medicine Inventory =====\n";
 
-    for (int i = 0; i<TABLE_SIZE; i++) {
+    for (int i = 0; i < TABLE_SIZE; i++)
+    {
 
         Node *current = table[i];
 
-        while (current != nullptr) {
+        while (current != nullptr)
+        {
             isEmpty = false;
 
             std::cout << "ID: " << current->medicine.id << "\n";
@@ -146,8 +151,110 @@ void HashTable::displayInventory() {
             current = current->next;
         }
 
-        if (isEmpty) {
+        if (isEmpty)
+        {
             std::cout << "Inventory is empty.\n";
         }
     }
+}
+
+// User-facing functions
+
+// Adds a new medicine to the inventory
+void addMedicine() {
+
+    Medicine medicine;
+
+    std::cout << "\nEnter Medicine ID: ";
+    std::cin >> medicine.id;
+
+    std::cout << "Enter Medicine Name: ";
+    std::cin >> medicine.name;
+
+    std::cout << "Enter Quantity: ";
+    std::cin >> medicine.quantity;
+
+    std::cout << "Enter Expiry Date: ";
+    std::cin >> medicine.expiryDate;
+
+    inventoryTable.insertMedicine(medicine);
+
+    std::cout << "Medicine added successfully.\n";
+}
+
+// Searches for a medicine using its ID
+void searchMedicine() {
+
+    int id;
+
+    std::cout << "\nEnter Medicine ID to search: ";
+    std::cin >> id;
+
+    Medicine* medicine = inventoryTable.searchMedicine(id);
+
+    if (medicine == nullptr) {
+        std::cout << "Medicine not found.\n";
+        return;
+    }
+
+    std::cout << "\nMedicine Found\n";
+    std::cout << "ID: " << medicine->id << "\n";
+    std::cout << "Name: " << medicine->name << "\n";
+    std::cout << "Quantity: " << medicine->quantity << "\n";
+    std::cout << "Expiry Date: " << medicine->expiryDate << "\n";
+}
+
+// Updates an existing medicine
+void updateMedicine() {
+
+    int id;
+    int quantity;
+    std::string expiryDate;
+
+    std::cout << "\nEnter Medicine ID to update: ";
+    std::cin >> id;
+
+    std::cout << "Enter new Quantity: ";
+    std::cin >> quantity;
+
+    std::cout << "Enter new Expiry Date: ";
+    std::cin >> expiryDate;
+
+    bool updated = inventoryTable.updateMedicine(id, quantity, expiryDate);
+
+    if (updated)
+    {
+        std::cout << "Medicine updated successfully.\n";
+    }
+    else
+    {
+        std::cout << "Medicine not found.\n";
+    }
+}
+
+// Deletes a medicine from the inventory
+void deleteMedicine() {
+
+    int id;
+
+    std::cout << "\nEnter Medicine ID to delete: ";
+    std::cin >> id;
+
+    bool deleted = inventoryTable.deleteMedicine(id);
+
+    if (deleted)
+    {
+        std::cout << "Medicine deleted successfully.\n";
+    }
+    else
+    {
+        std::cout << "Medicine not found.\n";
+    }
+}
+
+// Displays the complete inventory
+void displayInventory()
+{
+
+    inventoryTable.displayInventory();
 }

@@ -39,17 +39,15 @@ public:
     void displayInventory();
 };
 
-// Inventory module functions
+// User-facing functions
+void addMedicine();
 
-void insertMedicine();
+void searchMedicine();
 
-Medicine* searchMedicine();
+void updateMedicine();
 
-bool updateMedicine();
-
-bool deleteMedicine();
+void deleteMedicine();
 
 void displayInventory();
-
 
 #endif
