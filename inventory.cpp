@@ -65,14 +65,10 @@ Medicine *HashTable::searchMedicine(int id)
     return nullptr;
 }
 
-<<<<<<< HEAD
-void displayMedicine()
-{
-}
-=======
 // Updates quantity and expiry date of a medicine
-bool HashTable::updateMedicine(int id, int quantity, const std::string& expiryDate) {
-    Medicine* medicine = searchMedicine(id);
+bool HashTable::updateMedicine(int id, int quantity, const std::string &expiryDate)
+{
+    Medicine *medicine = searchMedicine(id);
 
     // Medicine not found
     if (medicine == nullptr)
@@ -86,4 +82,72 @@ bool HashTable::updateMedicine(int id, int quantity, const std::string& expiryDa
 
     return true;
 }
->>>>>>> inventory
+
+// Delete a medicine
+bool HashTable::deleteMedicine(int id)
+{
+
+    int index = hashFunction(id);
+
+    Node *current = table[index];
+    Node *previous = nullptr;
+
+    while (current != nullptr)
+    {
+
+        // Medicine found
+        if (current->medicine.id == id)
+        {
+
+            // Case 1: Delete the first node
+            if (previous == nullptr)
+            {
+                table[index] = current->next;
+            }
+
+            // Case 2: Delete a node after the first node
+            else
+            {
+                previous->next = current->next;
+            }
+
+            delete current;
+            return true;
+        }
+
+        previous = current;
+        current = current->next;
+    }
+
+    // Medicine not found
+    return false;
+}
+
+// Displays all medicines in the inventory
+void HashTable::displayInventory() {
+
+    bool isEmpty = true;
+
+    std::cout << "\n===== Medicine Inventory =====\n";
+
+    for (int i = 0; i<TABLE_SIZE; i++) {
+
+        Node *current = table[i];
+
+        while (current != nullptr) {
+            isEmpty = false;
+
+            std::cout << "ID: " << current->medicine.id << "\n";
+            std::cout << "Name: " << current->medicine.name << "\n";
+            std::cout << "Quantity: " << current->medicine.quantity << "\n";
+            std::cout << "Expiry Date: " << current->medicine.expiryDate << "\n";
+            std::cout << "-----------------------------\n";
+
+            current = current->next;
+        }
+
+        if (isEmpty) {
+            std::cout << "Inventory is empty.\n";
+        }
+    }
+}
