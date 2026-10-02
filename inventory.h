@@ -2,6 +2,7 @@
 #define INVENTORY_H
 
 #include <string>
+#include <vector>
 
 struct Medicine
 {
@@ -29,25 +30,22 @@ public:
     HashTable();
 
     void insertMedicine(const Medicine &medicine);
-
     Medicine *searchMedicine(int id);
-
     bool updateMedicine(int id, int quantity, const std::string &expiryDate);
-
     bool deleteMedicine(int id);
-
     void displayInventory();
+
+    std::vector<Medicine> getAllMedicines();
 };
 
-// User-facing functions
+extern HashTable inventoryTable;
+
+// Inventory module functions
+
 void addMedicine();
-
 void searchMedicine();
-
 void updateMedicine();
-
 void deleteMedicine();
-
 void displayInventory();
 
 #endif

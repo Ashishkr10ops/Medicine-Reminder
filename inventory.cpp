@@ -2,6 +2,8 @@
 #include "history.h"
 #include <iostream>
 
+#include <vector>
+
 HashTable inventoryTable;
 
 // HashTable functions
@@ -156,6 +158,25 @@ void HashTable::displayInventory()
     {
         std::cout << "Inventory is empty.\n";
     }
+}
+
+// Returns all medicines in the inventory
+std::vector<Medicine> HashTable::getAllMedicines()
+{
+    std::vector<Medicine> medicines;
+
+    for (int i = 0; i < TABLE_SIZE; i++)
+    {
+        Node *current = table[i];
+
+        while (current != nullptr)
+        {
+            medicines.push_back(current->medicine);
+            current = current->next;
+        }
+    }
+
+    return medicines;
 }
 
 // User-facing functions

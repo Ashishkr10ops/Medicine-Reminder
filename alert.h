@@ -1,15 +1,36 @@
 #ifndef ALERT_H
-// If it is not defined, the compiler proceeds with the code below it.
 #define ALERT_H
 
-// Functions declaration
+#include <string>
 
-void checkLowStock();
-void checkExpiry();
-void generateAlert();
+struct Alert
+{
+    int medicineId;
+    std::string message;
+};
+
+struct AlertNode
+{
+    Alert alert;
+    AlertNode *next;
+};
+
+class AlertManager
+{
+private:
+    AlertNode *head;
+
+public:
+    AlertManager();
+
+    void addAlert(const Alert &alert);
+    void clearAlerts();
+    void displayAlerts();
+};
+
+// Alert functions
+
+void checkAlerts();
+void displayAlerts();
 
 #endif
-// If this header hasn't been included, include its contents. Otherwise, skip it.
-
-// The #ifndef, #define, and#endif are called include guards.
-// They prevent the same header from being included multiple times.
