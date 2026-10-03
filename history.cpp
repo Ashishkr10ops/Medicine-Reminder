@@ -1,15 +1,17 @@
 #include "history.h"
+
 #include <iostream>
 
 HistoryStack historyStack;
 
 // Constructor
+// Initially, the stack is empty.
 HistoryStack::HistoryStack()
 {
     top = nullptr;
 }
 
-// Adds a new history record to the top of the stack
+// Pushes a new operation onto the stack.
 void HistoryStack::push(const History &history)
 {
 
@@ -21,11 +23,10 @@ void HistoryStack::push(const History &history)
     top = newNode;
 }
 
-// Removes the top history record
+// Removes the most recent operation from the stack.
 bool HistoryStack::pop()
 {
 
-    // Check if the stack is empty
     if (top == nullptr)
     {
         return false;
@@ -40,11 +41,10 @@ bool HistoryStack::pop()
     return true;
 }
 
-// Returns the top history record without removing it
+// Returns the most recent operation without removing it.
 History *HistoryStack::peek()
 {
 
-    // Check if the stack is empty
     if (top == nullptr)
     {
         return nullptr;
@@ -53,7 +53,7 @@ History *HistoryStack::peek()
     return &top->history;
 }
 
-// Displays all history records
+// Displays the history from newest to oldest.
 void HistoryStack::display()
 {
 
@@ -76,15 +76,14 @@ void HistoryStack::display()
     }
 }
 
-// User facing functions
-
-// Records a new operation in the history
+// Allows the user to manually record an operation.
 void recordOperation()
 {
 
     History history;
 
     std::cout << "\nEnter operation: ";
+
     std::cin.ignore();
     std::getline(std::cin, history.operation);
 
@@ -93,16 +92,16 @@ void recordOperation()
     std::cout << "Operation recorded successfully.\n";
 }
 
-// Displays the medicine operation history
+// Displays the complete history.
 void viewHistory()
 {
-
     historyStack.display();
 }
 
-// Adds an operation to the history stack
+// Used by other modules to automatically record operations.
 void addHistory(const std::string &operation)
 {
+
     History history;
 
     history.operation = operation;

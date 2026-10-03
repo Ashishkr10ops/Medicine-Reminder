@@ -1,12 +1,12 @@
 #include "inventory.h"
 #include "history.h"
-#include <iostream>
 
-#include <vector>
+#include <iostream>
 
 HashTable inventoryTable;
 
-// HashTable functions
+// Constructor
+// Initializes every hash table bucket as empty.
 HashTable::HashTable()
 {
 
@@ -16,27 +16,34 @@ HashTable::HashTable()
     }
 }
 
+// Hash function
+// Maps a medicine ID to a bucket in the hash table.
 int HashTable::hashFunction(int id)
 {
     return id % TABLE_SIZE;
 }
 
-// Insert medicine
+// Inserts a medicine into the hash table.
+// Separate chaining is used to handle collisions.
 void HashTable::insertMedicine(const Medicine &medicine)
 {
 
     int index = hashFunction(medicine.id);
 
     Node *newNode = new Node;
+
     newNode->medicine = medicine;
     newNode->next = nullptr;
 
+    // If the bucket is empty, insert directly.
     if (table[index] == nullptr)
     {
         table[index] = newNode;
         return;
     }
 
+    // Otherwise, traverse the linked list
+    // and insert the new node at the end.
     Node *current = table[index];
 
     while (current->next != nullptr)
@@ -47,7 +54,7 @@ void HashTable::insertMedicine(const Medicine &medicine)
     current->next = newNode;
 }
 
-// Search medicine
+// Searches for a medicine using its ID.
 Medicine *HashTable::searchMedicine(int id)
 {
 
@@ -69,25 +76,27 @@ Medicine *HashTable::searchMedicine(int id)
     return nullptr;
 }
 
-// Updates quantity and expiry date of a medicine
-bool HashTable::updateMedicine(int id, int quantity, const std::string &expiryDate)
+// Updates the quantity and expiry date of a medicine.
+bool HashTable::updateMedicine(
+    int id,
+    int quantity,
+    const std::string &expiryDate)
 {
+
     Medicine *medicine = searchMedicine(id);
 
-    // Medicine not found
     if (medicine == nullptr)
     {
         return false;
     }
 
-    // Update the existing medicine
     medicine->quantity = quantity;
     medicine->expiryDate = expiryDate;
 
     return true;
 }
 
-// Delete a medicine
+// Deletes a medicine from the hash table.
 bool HashTable::deleteMedicine(int id)
 {
 
@@ -99,23 +108,22 @@ bool HashTable::deleteMedicine(int id)
     while (current != nullptr)
     {
 
-        // Medicine found
         if (current->medicine.id == id)
         {
 
-            // Case 1: Delete the first node
+            // Deleting the first node of the bucket
             if (previous == nullptr)
             {
                 table[index] = current->next;
             }
-
-            // Case 2: Delete a node after the first node
             else
             {
+                // Removing a node from the middle/end
                 previous->next = current->next;
             }
 
             delete current;
+
             return true;
         }
 
@@ -123,11 +131,10 @@ bool HashTable::deleteMedicine(int id)
         current = current->next;
     }
 
-    // Medicine not found
     return false;
 }
 
-// Displays all medicines in the inventory
+// Displays all medicines stored in the hash table.
 void HashTable::displayInventory()
 {
 
@@ -142,12 +149,21 @@ void HashTable::displayInventory()
 
         while (current != nullptr)
         {
+
             isEmpty = false;
 
-            std::cout << "ID: " << current->medicine.id << "\n";
-            std::cout << "Name: " << current->medicine.name << "\n";
-            std::cout << "Quantity: " << current->medicine.quantity << "\n";
-            std::cout << "Expiry Date: " << current->medicine.expiryDate << "\n";
+            std::cout << "ID: "
+                      << current->medicine.id << "\n";
+
+            std::cout << "Name: "
+                      << current->medicine.name << "\n";
+
+            std::cout << "Quantity: "
+                      << current->medicine.quantity << "\n";
+
+            std::cout << "Expiry Date: "
+                      << current->medicine.expiryDate << "\n";
+
             std::cout << "-----------------------------\n";
 
             current = current->next;
@@ -160,18 +176,23 @@ void HashTable::displayInventory()
     }
 }
 
-// Returns all medicines in the inventory
+// Returns all medicines stored in the hash table.
+// Used by the Alert module to check stock and expiry.
 std::vector<Medicine> HashTable::getAllMedicines()
 {
+
     std::vector<Medicine> medicines;
 
     for (int i = 0; i < TABLE_SIZE; i++)
     {
+
         Node *current = table[i];
 
         while (current != nullptr)
         {
+
             medicines.push_back(current->medicine);
+
             current = current->next;
         }
     }
@@ -179,9 +200,7 @@ std::vector<Medicine> HashTable::getAllMedicines()
     return medicines;
 }
 
-// User-facing functions
-
-// Adds a new medicine to the inventory
+// User-facing function to add a medicine.
 void addMedicine()
 {
 
@@ -201,13 +220,13 @@ void addMedicine()
 
     inventoryTable.insertMedicine(medicine);
 
-    // Record the operation in history
+    // Record the operation in the history stack.
     addHistory("Added medicine: " + medicine.name);
 
     std::cout << "Medicine added successfully.\n";
 }
 
-// Searches for a medicine using its ID
+// User-facing function to search for a medicine.
 void searchMedicine()
 {
 
@@ -225,13 +244,21 @@ void searchMedicine()
     }
 
     std::cout << "\nMedicine Found\n";
-    std::cout << "ID: " << medicine->id << "\n";
-    std::cout << "Name: " << medicine->name << "\n";
-    std::cout << "Quantity: " << medicine->quantity << "\n";
-    std::cout << "Expiry Date: " << medicine->expiryDate << "\n";
+
+    std::cout << "ID: "
+              << medicine->id << "\n";
+
+    std::cout << "Name: "
+              << medicine->name << "\n";
+
+    std::cout << "Quantity: "
+              << medicine->quantity << "\n";
+
+    std::cout << "Expiry Date: "
+              << medicine->expiryDate << "\n";
 }
 
-// Updates an existing medicine
+// User-facing function to update a medicine.
 void updateMedicine()
 {
 
@@ -248,10 +275,16 @@ void updateMedicine()
     std::cout << "Enter new Expiry Date: ";
     std::cin >> expiryDate;
 
-    bool updated = inventoryTable.updateMedicine(id, quantity, expiryDate);
+    bool updated =
+        inventoryTable.updateMedicine(id, quantity, expiryDate);
 
     if (updated)
     {
+
+        // Record the operation in the history stack.
+        addHistory("Updated medicine ID: " +
+                   std::to_string(id));
+
         std::cout << "Medicine updated successfully.\n";
     }
     else
@@ -260,7 +293,7 @@ void updateMedicine()
     }
 }
 
-// Deletes a medicine from the inventory
+// User-facing function to delete a medicine.
 void deleteMedicine()
 {
 
@@ -274,8 +307,9 @@ void deleteMedicine()
     if (deleted)
     {
 
-        // Record the operation in history
-        addHistory("Deleted medicine ID: " + std::to_string(id));
+        // Record the operation in the history stack.
+        addHistory("Deleted medicine ID: " +
+                   std::to_string(id));
 
         std::cout << "Medicine deleted successfully.\n";
     }
@@ -285,9 +319,8 @@ void deleteMedicine()
     }
 }
 
-// Displays the complete inventory
+// Displays the complete inventory.
 void displayInventory()
 {
-
     inventoryTable.displayInventory();
 }
