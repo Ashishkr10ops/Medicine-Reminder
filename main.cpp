@@ -8,49 +8,49 @@
 #include "storage.h"
 #include "patient.h"
 #include "disease.h"
+#include "design.h"
 
 int main()
 {
     initializeConflicts();
-
     int choice;
 
     do
     {
-        std::cout << "\n===============================================\n";
+        std::cout << YELLOW << BOLD << "\n===============================================\n";
         std::cout << "   Medicine Reminder and Inventory Management\n";
-        std::cout << "===============================================\n";
+        std::cout << "===============================================\n" << RESET;
 
-        std::cout << "\n----- Inventory Management -----\n";
+        std::cout << GREEN << BOLD << "\n[ Inventory Management ]" << RESET << "\n";
         std::cout << "1. Add Medicine\n";
         std::cout << "2. Search Medicine\n";
         std::cout << "3. Update Medicine\n";
         std::cout << "4. Delete Medicine\n";
         std::cout << "5. Display Inventory\n";
 
-        std::cout << "\n----- Reminder Management -----\n";
+        std::cout << BLUE << BOLD << "\n[ Reminder Management ]" << RESET << "\n";
         std::cout << "6. Add Reminder\n";
         std::cout << "7. Remove Next Reminder\n";
         std::cout << "8. View Next Reminder\n";
         std::cout << "9. View All Reminders\n";
 
-        std::cout << "\n----- Patient Management -----\n";
+        std::cout << CYAN << BOLD << "\n[ Patient Management ]" << RESET << "\n";
         std::cout << "10. Add Patient Profile\n";
         std::cout << "11. View Patient Profile\n";
         std::cout << "12. Display All Patients\n";
 
-        std::cout << "\n----- Disease & Treatment -----\n";
+        std::cout << YELLOW << BOLD << "\n[ Disease & Treatment ]" << RESET << "\n";
         std::cout << "13. Link Medicine to a Disease\n";
         std::cout << "14. View Treatments for a Disease\n";
         std::cout << "15. Suggest Medicine for Patient\n";
 
-        std::cout << "\n----- Alerts & Data -----\n";
+        std::cout << RED << BOLD << "\n[ Alerts & Data ]" << RESET << "\n";
         std::cout << "16. Check Alerts\n";
         std::cout << "17. Display Alerts\n";
         std::cout << "18. Backup Inventory\n";
         std::cout << "19. View History\n";
 
-        std::cout << "\n0. Exit\n";
+        std::cout << BOLD << "\n0. Exit\n" << RESET;
 
         std::cout << "\nEnter your choice: ";
         std::cin >> choice;
@@ -77,10 +77,10 @@ int main()
         case 18: saveInventory(); break;
         case 19: viewHistory(); break;
         case 0:
-            std::cout << "\nExiting system...\n";
+            std::cout << GREEN << "\nExiting system... Have a healthy day!\n" << RESET;
             break;
         default:
-            std::cout << "\nInvalid choice. Please try again.\n";
+            std::cout << RED << "\nInvalid choice. Please try again.\n" << RESET;
         }
 
     } while (choice != 0);

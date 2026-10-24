@@ -1,4 +1,5 @@
 #include "conflict.h"
+#include "design.h"
 #include <iostream>
 
 ConflictGraph conflictGraph;
@@ -16,7 +17,7 @@ bool ConflictGraph::hasConflict(const std::string& newMed, const std::vector<std
     for (const std::string& current : currentMeds) {
         for (const std::string& conflict : adjList[newMed]) {
             if (current == conflict) {
-                std::cout << "\n[CRITICAL WARNING]: " << newMed << " severely conflicts with " << current << "!\n";
+                std::cout << RED << BOLD << "\n[CRITICAL WARNING]: " << newMed << " severely conflicts with " << current << "!\n" << RESET;
                 return true;
             }
         }
