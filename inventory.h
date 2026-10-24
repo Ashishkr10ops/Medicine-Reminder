@@ -46,6 +46,7 @@ public:
 
     // Returns all medicines for other modules
     std::vector<Medicine> getAllMedicines();
+    ~HashTable(); // Destructor to prevent memory leak
 };
 
 // Global inventory table

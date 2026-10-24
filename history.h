@@ -30,6 +30,7 @@ public:
     bool pop();
     History *peek();
     void display();
+    ~HistoryStack(); // Destructor to prevent memory leak
 };
 
 // Global history stack

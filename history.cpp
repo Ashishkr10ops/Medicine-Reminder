@@ -108,3 +108,7 @@ void addHistory(const std::string &operation)
 
     historyStack.push(history);
 }
+
+HistoryStack::~HistoryStack() {
+    while (pop());
+}

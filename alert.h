@@ -25,6 +25,7 @@ private:
 
 public:
     AlertManager();
+    ~AlertManager();
 
     // Alert list operations
     void addAlert(const Alert &alert);
