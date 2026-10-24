@@ -4,8 +4,10 @@
 #include "history.h"
 #include "alert.h"
 #include "reminder.h"
-#include "conflict.h" 
-#include "storage.h"  
+#include "conflict.h"
+#include "storage.h"
+#include "patient.h"
+#include "disease.h"
 
 int main()
 {
@@ -20,7 +22,7 @@ int main()
         std::cout << "===============================================\n";
 
         std::cout << "\n----- Inventory Management -----\n";
-        std::cout << "1. Add Medicine\n"; 
+        std::cout << "1. Add Medicine\n";
         std::cout << "2. Search Medicine\n";
         std::cout << "3. Update Medicine\n";
         std::cout << "4. Delete Medicine\n";
@@ -32,13 +34,21 @@ int main()
         std::cout << "8. View Next Reminder\n";
         std::cout << "9. View All Reminders\n";
 
-        std::cout << "\n----- History -----\n";
-        std::cout << "10. View History\n";
+        std::cout << "\n----- Patient Management -----\n";
+        std::cout << "10. Add Patient Profile\n";
+        std::cout << "11. View Patient Profile\n";
+        std::cout << "12. Display All Patients\n";
+
+        std::cout << "\n----- Disease & Treatment -----\n";
+        std::cout << "13. Link Medicine to a Disease\n";
+        std::cout << "14. View Treatments for a Disease\n";
+        std::cout << "15. Suggest Medicine for Patient\n";
 
         std::cout << "\n----- Alerts & Data -----\n";
-        std::cout << "11. Check Alerts\n";
-        std::cout << "12. Display Alerts\n";
-        std::cout << "13. Backup Inventory\n"; 
+        std::cout << "16. Check Alerts\n";
+        std::cout << "17. Display Alerts\n";
+        std::cout << "18. Backup Inventory\n";
+        std::cout << "19. View History\n";
 
         std::cout << "\n0. Exit\n";
 
@@ -56,10 +66,16 @@ int main()
         case 7: removeReminder(); break;
         case 8: viewNextReminder(); break;
         case 9: viewAllReminders(); break;
-        case 10: viewHistory(); break;
-        case 11: checkAlerts(); break;
-        case 12: displayAlerts(); break;
-        case 13: saveInventory(); break; 
+        case 10: patientManager.addPatient(); break;
+        case 11: patientManager.viewPatient(); break;
+        case 12: patientManager.displayAllPatients(); break;
+        case 13: diseaseManager.addTreatment(); break;
+        case 14: diseaseManager.viewTreatments(); break;
+        case 15: diseaseManager.suggestForPatient(); break;
+        case 16: checkAlerts(); break;
+        case 17: displayAlerts(); break;
+        case 18: saveInventory(); break;
+        case 19: viewHistory(); break;
         case 0:
             std::cout << "\nExiting system...\n";
             break;
