@@ -39,6 +39,7 @@ public:
 
     // Displays operations from newest to oldest.
     void display();
+    ~HistoryStack(); // Destructor to prevent memory leak
 };
 
 // Shared stack object defined in history.cpp.

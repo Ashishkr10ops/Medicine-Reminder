@@ -63,6 +63,7 @@ public:
 
     // Loads medicines from a file.
     bool loadInventory(const std::string &filename);
+    ~HashTable(); // Destructor to prevent memory leak
 };
 
 // Shared inventory object used across the project.

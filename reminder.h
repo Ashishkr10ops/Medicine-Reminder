@@ -41,12 +41,12 @@ public:
 
     // Displays all reminders in their current heap arrangement.
     void displayReminders();
+    std::vector<std::string> getAllScheduledMedicines(); // New addition
 };
 
 // Shared reminder queue defined in reminder.cpp.
 extern ReminderQueue reminderQueue;
 
-// User-facing functions called from the main menu.
 void addReminder();
 void removeReminder();
 void viewNextReminder();

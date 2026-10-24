@@ -392,3 +392,14 @@ void displayInventory()
 {
     inventoryTable.displayInventory();
 }
+
+HashTable::~HashTable() {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        Node* current = table[i];
+        while (current != nullptr) {
+            Node* temp = current;
+            current = current->next;
+            delete temp;
+        }
+    }
+}

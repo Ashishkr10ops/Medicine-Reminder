@@ -1,5 +1,7 @@
 
+
 #include "reminder.h"
+#include "conflict.h"
 
 #include <iostream>
 #include <utility>
@@ -15,22 +17,17 @@ ReminderQueue::ReminderQueue()
 // Move a newly inserted reminder upward to restore min-heap order.
 void ReminderQueue::heapifyUp(int index)
 {
-    // Continue while the current node has a parent.
     while (index > 0)
     {
-        // Calculate the parent index in the array-based heap.
         int parent = (index - 1) / 2;
 
-        // Stop if the parent already has an earlier or equal time.
+        // Stop if the parent has an earlier or equal reminder time.
         if (heap[parent].reminderTime <= heap[index].reminderTime)
         {
             break;
         }
 
-        // Swap the child with its parent when heap order is violated.
         std::swap(heap[parent], heap[index]);
-
-        // Continue checking from the parent's previous position.
         index = parent;
     }
 }
@@ -38,10 +35,7 @@ void ReminderQueue::heapifyUp(int index)
 // Insert a reminder into the min-heap.
 void ReminderQueue::addReminder(const Reminder &reminder)
 {
-    // Add the new reminder at the end of the vector.
     heap.push_back(reminder);
-
-    // Restore heap order by moving the new element upward.
     heapifyUp(static_cast<int>(heap.size()) - 1);
 }
 
@@ -52,21 +46,18 @@ void ReminderQueue::heapifyDown(int index)
 
     while (true)
     {
-        // Calculate the indices of the left and right children.
         int left = 2 * index + 1;
         int right = 2 * index + 2;
-
-        // Assume the current node has the earliest reminder.
         int smallest = index;
 
-        // Check whether the left child has an earlier reminder.
-        if (left < size && heap[left].reminderTime < heap[smallest].reminderTime)
+        if (left < size &&
+            heap[left].reminderTime < heap[smallest].reminderTime)
         {
             smallest = left;
         }
 
-        // Check whether the right child has an earlier reminder.
-        if (right < size && heap[right].reminderTime < heap[smallest].reminderTime)
+        if (right < size &&
+            heap[right].reminderTime < heap[smallest].reminderTime)
         {
             smallest = right;
         }
@@ -77,10 +68,7 @@ void ReminderQueue::heapifyDown(int index)
             break;
         }
 
-        // Swap with the child having the earliest reminder.
         std::swap(heap[index], heap[smallest]);
-
-        // Continue from the child's position.
         index = smallest;
     }
 }
@@ -88,7 +76,6 @@ void ReminderQueue::heapifyDown(int index)
 // Remove the earliest reminder from the min-heap.
 bool ReminderQueue::removeReminder()
 {
-    // An empty heap has no reminder to remove.
     if (heap.empty())
     {
         return false;
@@ -96,11 +83,8 @@ bool ReminderQueue::removeReminder()
 
     // Replace the root with the last element.
     heap[0] = heap.back();
-
-    // Remove the duplicate last element.
     heap.pop_back();
 
-    // Restore heap order if reminders remain.
     if (!heap.empty())
     {
         heapifyDown(0);
@@ -112,7 +96,6 @@ bool ReminderQueue::removeReminder()
 // Return the earliest reminder without removing it.
 Reminder *ReminderQueue::getNextReminder()
 {
-    // The root contains the earliest reminder.
     if (heap.empty())
     {
         return nullptr;
@@ -121,7 +104,7 @@ Reminder *ReminderQueue::getNextReminder()
     return &heap[0];
 }
 
-// Display reminders in the current heap arrangement.
+// Display all reminders in the current heap arrangement.
 void ReminderQueue::displayReminders()
 {
     if (heap.empty())
@@ -130,47 +113,67 @@ void ReminderQueue::displayReminders()
         return;
     }
 
-    // Heap order does not necessarily mean the entire list is sorted.
+    std::cout << "\n===== Reminders =====\n";
+
     for (const Reminder &reminder : heap)
     {
-        std::cout << "Medicine ID: "
-                  << reminder.medicineId << "\n";
-
-        std::cout << "Medicine Name: "
-                  << reminder.medicineName << "\n";
-
-        std::cout << "Reminder Time: "
-                  << reminder.reminderTime << "\n";
-
+        std::cout << "Medicine ID: " << reminder.medicineId << "\n";
+        std::cout << "Medicine Name: " << reminder.medicineName << "\n";
+        std::cout << "Reminder Time: " << reminder.reminderTime << "\n";
         std::cout << "-----------------------------\n";
     }
 }
 
-// User-facing function to add a reminder.
+// Return the medicine names currently present in the reminder queue.
+std::vector<std::string> ReminderQueue::getAllScheduledMedicines()
+{
+    std::vector<std::string> medicines;
+
+    for (const Reminder &reminder : heap)
+    {
+        medicines.push_back(reminder.medicineName);
+    }
+
+    return medicines;
+}
+
+// Add a reminder after checking for known drug conflicts.
 void addReminder()
 {
     Reminder reminder;
 
     std::cout << "\nEnter Medicine ID: ";
-    std::cin >> reminder.medicineId;
+    if (!(std::cin >> reminder.medicineId))
+    {
+        std::cin.clear();
+        std::cin.ignore(10000, '\n');
+        std::cout << "Invalid medicine ID.\n";
+        return;
+    }
 
     std::cout << "Enter Medicine Name: ";
     std::getline(std::cin >> std::ws, reminder.medicineName);
 
-    // Enter time in zero-padded 24-hour format, such as 09:05.
-    std::cout << "Enter Reminder Time (HH:MM): ";
+    std::cout << "Enter Reminder Time (HH:MM, 24-hour format): ";
     std::cin >> reminder.reminderTime;
 
-    // Insert the reminder into the priority queue.
-    reminderQueue.addReminder(reminder);
+    // Compare the new medicine with medicines already scheduled.
+    std::vector<std::string> currentMeds =
+        reminderQueue.getAllScheduledMedicines();
 
+    if (conflictGraph.hasConflict(reminder.medicineName, currentMeds))
+    {
+        std::cout << "Reminder aborted due to a potential drug interaction.\n";
+        return;
+    }
+
+    reminderQueue.addReminder(reminder);
     std::cout << "Reminder added successfully.\n";
 }
 
-// User-facing function to remove the earliest reminder.
+// Remove the earliest reminder.
 void removeReminder()
 {
-    // Get the reminder at the root before removing it.
     Reminder *next = reminderQueue.getNextReminder();
 
     if (next == nullptr)
@@ -179,13 +182,14 @@ void removeReminder()
         return;
     }
 
-    // Display the reminder that will be removed.
-    std::cout << "Removing reminder for "
-              << next->medicineName
-              << " at " << next->reminderTime << "\n";
+    // Print the details before removing the reminder.
+    std::cout << "\nRemoving reminder for " << next->medicineName
+              << " at " << next->reminderTime << ".\n";
 
-    // Remove the root and restore min-heap order.
-    reminderQueue.removeReminder();
+    if (reminderQueue.removeReminder())
+    {
+        std::cout << "Reminder removed successfully.\n";
+    }
 }
 
 // Display the earliest reminder without removing it.
@@ -199,16 +203,10 @@ void viewNextReminder()
         return;
     }
 
-    std::cout << "\nNext Reminder\n";
-
-    std::cout << "Medicine ID: "
-              << next->medicineId << "\n";
-
-    std::cout << "Medicine Name: "
-              << next->medicineName << "\n";
-
-    std::cout << "Reminder Time: "
-              << next->reminderTime << "\n";
+    std::cout << "\n===== Next Reminder =====\n";
+    std::cout << "Medicine ID: " << next->medicineId << "\n";
+    std::cout << "Medicine Name: " << next->medicineName << "\n";
+    std::cout << "Reminder Time: " << next->reminderTime << "\n";
 }
 
 // Display all reminders.

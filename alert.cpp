@@ -217,3 +217,7 @@ void displayAlerts()
 {
     alertManager.displayAlerts();
 }
+
+AlertManager::~AlertManager() {
+    clearAlerts();
+}

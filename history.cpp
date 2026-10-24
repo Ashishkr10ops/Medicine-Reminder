@@ -122,3 +122,7 @@ void addHistory(const std::string &operation)
     // Push it onto the stack so it becomes the newest entry.
     historyStack.push(history);
 }
+
+HistoryStack::~HistoryStack() {
+    while (pop());
+}

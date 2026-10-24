@@ -28,6 +28,7 @@ private:
 public:
     // Initializes an empty alert list.
     AlertManager();
+    ~AlertManager();
 
     // Adds a new alert to the end of the list.
     void addAlert(const Alert &alert);

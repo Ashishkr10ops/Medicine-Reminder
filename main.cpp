@@ -8,9 +8,15 @@
 #include "history.h"
 #include "alert.h"
 #include "reminder.h"
+#include "conflict.h"
+#include "storage.h"
+#include "patient.h"
+#include "disease.h"
+#include "design.h"
 
 int main()
 {
+    initializeConflicts();
     int choice;
 
     // Load saved medicines when the program starts.
@@ -22,12 +28,13 @@ int main()
     // Repeat the menu until the user chooses 0 to exit.
     do
     {
-        std::cout << "\n===============================================\n";
+        std::cout << YELLOW << BOLD << "\n===============================================\n";
         std::cout << "   Medicine Reminder and Inventory Management\n";
-        std::cout << "===============================================\n";
+        std::cout << "===============================================\n" << RESET;
 
         // Display inventory management options.
         std::cout << "\n----- Inventory Management -----\n";
+        std::cout << GREEN << BOLD << "\n[ Inventory Management ]" << RESET << "\n";
         std::cout << "1. Add Medicine\n";
         std::cout << "2. Search Medicine\n";
         std::cout << "3. Update Medicine\n";
@@ -36,6 +43,7 @@ int main()
 
         // Display reminder management options.
         std::cout << "\n----- Reminder Management -----\n";
+        std::cout << BLUE << BOLD << "\n[ Reminder Management ]" << RESET << "\n";
         std::cout << "6. Add Reminder\n";
         std::cout << "7. Remove Next Reminder\n";
         std::cout << "8. View Next Reminder\n";
@@ -49,8 +57,23 @@ int main()
         std::cout << "\n----- Alerts -----\n";
         std::cout << "11. Check Alerts\n";
         std::cout << "12. Display Alerts\n";
+        std::cout << CYAN << BOLD << "\n[ Patient Management ]" << RESET << "\n";
+        std::cout << "10. Add Patient Profile\n";
+        std::cout << "11. View Patient Profile\n";
+        std::cout << "12. Display All Patients\n";
 
-        std::cout << "\n0. Exit\n";
+        std::cout << YELLOW << BOLD << "\n[ Disease & Treatment ]" << RESET << "\n";
+        std::cout << "13. Link Medicine to a Disease\n";
+        std::cout << "14. View Treatments for a Disease\n";
+        std::cout << "15. Suggest Medicine for Patient\n";
+
+        std::cout << RED << BOLD << "\n[ Alerts & Data ]" << RESET << "\n";
+        std::cout << "16. Check Alerts\n";
+        std::cout << "17. Display Alerts\n";
+        std::cout << "18. Backup Inventory\n";
+        std::cout << "19. View History\n";
+
+        std::cout << BOLD << "\n0. Exit\n" << RESET;
 
         // Read the user's menu selection and validate the input.
         std::cout << "\nEnter your choice: ";
@@ -70,9 +93,10 @@ int main()
         }
 
         // Execute the operation corresponding to the selected option.
+
         switch (choice)
         {
-        // Inventory module: manage medicine records.
+        // Inventory module
         case 1:
             addMedicine();
             break;
@@ -93,7 +117,7 @@ int main()
             displayInventory();
             break;
 
-        // Reminder module: manage medicine reminders.
+        // Reminder module
         case 6:
             addReminder();
             break;
@@ -110,34 +134,66 @@ int main()
             viewAllReminders();
             break;
 
-        // History module: display recorded operations.
+        // Patient management
         case 10:
-            viewHistory();
+            patientManager.addPatient();
             break;
 
-        // Alert module: check and display medicine alerts.
         case 11:
-            checkAlerts();
+            patientManager.viewPatient();
             break;
 
         case 12:
+            patientManager.displayAllPatients();
+            break;
+
+        // Disease and treatment management
+        case 13:
+            diseaseManager.addTreatment();
+            break;
+
+        case 14:
+            diseaseManager.viewTreatments();
+            break;
+
+        case 15:
+            diseaseManager.suggestForPatient();
+            break;
+
+        // Alerts
+        case 16:
+            checkAlerts();
+            break;
+
+        case 17:
             displayAlerts();
             break;
 
-        // Exit the program.
+        // Inventory and history
+        case 18:
+            saveInventory();
+            break;
+
+        case 19:
+            viewHistory();
+            break;
+
+        // Exit
         case 0:
-            // Save inventory before exiting.
             if (inventoryTable.saveInventory("medicines.txt"))
             {
                 std::cout << "Inventory saved successfully.\n";
             }
 
-            std::cout << "\nExiting system...\n";
+            std::cout << GREEN
+                      << "\nExiting system... Have a healthy day!\n"
+                      << RESET;
             break;
 
-        // Handle an invalid menu selection.
         default:
-            std::cout << "\nInvalid choice. Please try again.\n";
+            std::cout << RED
+                      << "\nInvalid choice. Please try again.\n"
+                      << RESET;
         }
 
     } while (choice != 0);
