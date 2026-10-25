@@ -53,12 +53,6 @@ inventory.h / inventory.cpp: Manages the pharmacy stock. Uses a Hash Table for q
 Reminder Module (Min-Heap)
 reminder.h / reminder.cpp: Handles scheduling. Uses a Min-Heap (Priority Queue) to ensure that the reminder with the earliest time is always at the top and the first to be displayed/removed.
 
-Patient Module (Hash Map)
-patient.h / patient.cpp: Stores user profiles. Uses an std::unordered_map (Hash Map) for O(1) time complexity lookups, meaning you can find a patient instantly by their ID regardless of how many patients are registered.
-
-Disease Module (Hash Map)
-disease.h / disease.cpp: Maps illnesses to treatments. Uses a Hash Map containing string keys (the disease) and vector values (the list of medicines) to suggest appropriate treatments for patients.
-
 Safety & Conflict Module (Graph)
 conflict.h / conflict.cpp: The medical safety checker. Uses an Adjacency List Graph to map out dangerous drug interactions. Before a reminder is added, it traverses the graph to ensure the new drug doesn't fatally conflict with a currently scheduled drug.
 
@@ -67,6 +61,3 @@ alert.h / alert.cpp: Scans for low stock and expired medicines. It stores these 
 
 History Module (Stack)
 history.h / history.cpp: Tracks user actions. Uses a Stack (LIFO - Last In, First Out) to store operations, ensuring the most recent action is always viewed first.
-
-Storage Module (File I/O)
-storage.h / storage.cpp: Handles data persistence. Writes the current Hash Map inventory data to a physical text file (inventory_backup.txt) on the user's hard drive so data survives after the program exits.

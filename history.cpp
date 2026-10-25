@@ -2,6 +2,9 @@
 #include "history.h"
 
 #include <iostream>
+#include <fstream>
+#include <vector>
+#include <limits>
 
 // Define the shared history stack declared in history.h.
 HistoryStack historyStack;
@@ -86,6 +89,73 @@ void HistoryStack::display()
     }
 }
 
+void HistoryStack::saveToFile(const std::string &filename)
+{
+    std::cout << "\nSaving history to: " << filename << '\n';
+
+    std::ofstream file(filename);
+
+    if (!file.is_open())
+    {
+        std::cout << "ERROR: Could not open history file for writing.\n";
+        return;
+    }
+
+    // Collect operations from newest to oldest.
+    std::vector<std::string> operations;
+
+    HistoryNode *current = top;
+
+    while (current != nullptr)
+    {
+        operations.push_back(current->history.operation);
+        current = current->next;
+    }
+
+    // Save oldest to newest so loading restores stack order.
+    for (auto it = operations.rbegin(); it != operations.rend(); ++it)
+    {
+        file << *it << '\n';
+    }
+
+    file.close();
+
+    if (file.fail())
+    {
+        std::cout << "ERROR: Failed while writing history.\n";
+        return;
+    }
+
+    std::cout << "History saved successfully. Entries: "
+              << operations.size() << '\n';
+}
+
+void HistoryStack::loadFromFile(const std::string &filename)
+{
+    std::ifstream file(filename);
+
+    // If the file does not exist yet, start with empty history.
+    if (!file.is_open())
+        return;
+
+    // Avoid duplicating entries if loading is called again.
+    while (pop())
+    {
+    }
+
+    std::string operation;
+
+    // File entries are stored oldest to newest.
+    while (std::getline(file, operation))
+    {
+        History history;
+        history.operation = operation;
+        push(history);
+    }
+
+    file.close();
+}
+
 // Allow the user to manually enter a history operation.
 void recordOperation()
 {
@@ -123,6 +193,8 @@ void addHistory(const std::string &operation)
     historyStack.push(history);
 }
 
-HistoryStack::~HistoryStack() {
-    while (pop());
+HistoryStack::~HistoryStack()
+{
+    while (pop())
+        ;
 }

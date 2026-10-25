@@ -1,6 +1,7 @@
 
 #include "inventory.h"
 #include "history.h"
+#include "reminder.h"
 
 #include <iostream>
 #include <fstream>
@@ -375,11 +376,15 @@ void deleteMedicine()
 
     if (deleted)
     {
-        // Record the operation only if deletion succeeds.
-        addHistory("Deleted medicine ID: " +
-                   std::to_string(id));
+        int removedReminders =
+            reminderQueue.removeRemindersForMedicine(id);
 
         std::cout << "Medicine deleted successfully.\n";
+        std::cout << removedReminders
+                  << " associated reminder(s) removed.\n";
+
+        addHistory("Deleted medicine ID: " +
+                   std::to_string(id));
     }
     else
     {
@@ -393,11 +398,14 @@ void displayInventory()
     inventoryTable.displayInventory();
 }
 
-HashTable::~HashTable() {
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        Node* current = table[i];
-        while (current != nullptr) {
-            Node* temp = current;
+HashTable::~HashTable()
+{
+    for (int i = 0; i < TABLE_SIZE; i++)
+    {
+        Node *current = table[i];
+        while (current != nullptr)
+        {
+            Node *temp = current;
             current = current->next;
             delete temp;
         }

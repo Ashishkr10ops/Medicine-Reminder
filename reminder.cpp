@@ -137,6 +137,28 @@ std::vector<std::string> ReminderQueue::getAllScheduledMedicines()
     return medicines;
 }
 
+int ReminderQueue::removeRemindersForMedicine(int medicineId)
+{
+    int removed = 0;
+    std::vector<Reminder> remaining;
+
+    for (const Reminder &reminder : heap)
+    {
+        if (reminder.medicineId == medicineId)
+            removed++;
+        else
+            remaining.push_back(reminder);
+    }
+
+    heap = remaining;
+
+    // Restore min-heap order after removing reminders.
+    for (int i = static_cast<int>(heap.size()) / 2 - 1; i >= 0; i--)
+        heapifyDown(i);
+
+    return removed;
+}
+
 // Add a reminder after checking for known drug conflicts.
 void addReminder()
 {

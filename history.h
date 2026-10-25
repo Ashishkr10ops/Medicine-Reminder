@@ -39,7 +39,15 @@ public:
 
     // Displays operations from newest to oldest.
     void display();
-    ~HistoryStack(); // Destructor to prevent memory leak
+
+    // Saves the stack history to a file.
+    void saveToFile(const std::string &filename);
+
+    // Loads history from a file.
+    void loadFromFile(const std::string &filename);
+
+    // Destructor to prevent memory leaks.
+    ~HistoryStack();
 };
 
 // Shared stack object defined in history.cpp.
