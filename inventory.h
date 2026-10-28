@@ -25,6 +25,7 @@ struct Node
 // Hash table for storing and managing medicine records.
 class HashTable
 {
+
 private:
     // Total number of buckets in the hash table.
     static const int TABLE_SIZE = 10;
@@ -32,12 +33,18 @@ private:
     // Each bucket points to the first node of its linked list.
     Node *table[TABLE_SIZE];
 
+    // Stores the next medicine ID to assign automatically.
+    int nextMedicineId;
+
     // Converts a medicine ID into a valid bucket index.
     int hashFunction(int id);
 
 public:
     // Initializes all hash table buckets as empty.
     HashTable();
+
+    // Generates and returns the next unique medicine ID.
+    int generateMedicineId();
 
     // Adds a medicine to the appropriate bucket.
     void insertMedicine(const Medicine &medicine);
@@ -76,5 +83,6 @@ void searchMedicine();
 void updateMedicine();
 void deleteMedicine();
 void displayInventory();
+bool isValidDateFormat(const std::string &date);
 
 #endif

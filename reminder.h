@@ -44,6 +44,9 @@ public:
     std::vector<std::string> getAllScheduledMedicines(); // New addition
 
     int removeRemindersForMedicine(int medicineId);
+
+    void saveToFile(const std::string &filename);
+    void loadFromFile(const std::string &filename);
 };
 
 // Shared reminder queue defined in reminder.cpp.
@@ -53,5 +56,6 @@ void addReminder();
 void removeReminder();
 void viewNextReminder();
 void viewAllReminders();
+bool isValidReminderTime(const std::string &time);
 
 #endif

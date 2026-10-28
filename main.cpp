@@ -25,6 +25,8 @@ int main()
     // Load saved history when the program starts.
     historyStack.loadFromFile("history.txt");
 
+    reminderQueue.loadFromFile("reminders.txt");
+
     // Repeat the menu until the user chooses 0 to exit.
     do
     {
@@ -57,14 +59,13 @@ int main()
         std::cout << RED << BOLD
                   << "\n[ Alerts ]\n"
                   << RESET;
-        std::cout << "10. Check Alerts\n";
-        std::cout << "11. Display Alerts\n";
+        std::cout << "10. Display Alerts\n";
 
         // History
         std::cout << CYAN << BOLD
                   << "\n[ History ]\n"
                   << RESET;
-        std::cout << "12. View History\n";
+        std::cout << "11. View History\n";
 
         std::cout << YELLOW << BOLD
                   << "\n0. Exit\n"
@@ -106,13 +107,23 @@ int main()
             displayInventory();
             break;
 
-        // Reminder module
+            // Reminder module
+
         case 6:
         {
             int id;
 
             std::cout << "\nEnter Medicine ID: ";
-            std::cin >> id;
+
+            if (!(std::cin >> id))
+            {
+                std::cout << RED << "Invalid Medicine ID!\n"
+                          << RESET;
+                std::cin.clear();
+                std::cin.ignore(
+                    std::numeric_limits<std::streamsize>::max(), '\n');
+                break;
+            }
 
             Medicine *medicine = inventoryTable.searchMedicine(id);
 
@@ -124,11 +135,34 @@ int main()
                 break;
             }
 
+            // Check for conflicts with medicines already scheduled.
+            std::vector<std::string> currentMeds =
+                reminderQueue.getAllScheduledMedicines();
+
+            if (conflictGraph.hasConflict(medicine->name, currentMeds))
+            {
+                std::cout << RED
+                          << "Reminder not added due to a configured conflict.\n"
+                          << RESET;
+                break;
+            }
+
+            // Read and validate reminder time.
             std::string reminderTime;
 
             std::cout << "Enter Reminder Time (HH:MM): ";
             std::cin >> reminderTime;
 
+            if (!isValidReminderTime(reminderTime))
+            {
+                std::cout << RED
+                          << "Invalid reminder time! "
+                          << "Use HH:MM format (00:00 to 23:59).\n"
+                          << RESET;
+                break;
+            }
+
+            // Create and add the reminder only after validation.
             Reminder reminder;
             reminder.medicineId = medicine->id;
             reminder.medicineName = medicine->name;
@@ -155,17 +189,15 @@ int main()
             viewAllReminders();
             break;
 
-        // Alert module
-        case 10:
-            checkAlerts();
-            break;
+            // Alert module
 
-        case 11:
-            displayAlerts();
+        case 10:
+            checkAlerts();   // Refresh alerts using current inventory
+            displayAlerts(); // Display the refreshed alerts
             break;
 
         // History module
-        case 12:
+        case 11:
             viewHistory();
             break;
 
@@ -181,6 +213,8 @@ int main()
             }
 
             historyStack.saveToFile("history.txt");
+
+            reminderQueue.saveToFile("reminders.txt");
 
             std::cout << GREEN
                       << "\nExiting system... Have a healthy day!\n"

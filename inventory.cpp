@@ -7,24 +7,62 @@
 #include <fstream>
 #include <string>
 #include <limits>
+#include <cctype>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 // Define the shared inventory object declared in inventory.h.
 HashTable inventoryTable;
 
 // Constructor: initialize every bucket as empty.
-HashTable::HashTable()
+HashTable::HashTable() : nextMedicineId(100)
 {
     for (int i = 0; i < TABLE_SIZE; i++)
     {
         table[i] = nullptr;
     }
+
+    // Restore the next ID from the previous run.
+    std::ifstream file("medicine_id_counter.txt");
+
+    if (file >> nextMedicineId && nextMedicineId < 100)
+    {
+        nextMedicineId = 100;
+    }
+}
+
+// Generate a unique medicine ID and save the counter.
+int HashTable::generateMedicineId()
+{
+    // Skip IDs that are already present in the inventory.
+    while (searchMedicine(nextMedicineId) != nullptr)
+    {
+        nextMedicineId++;
+    }
+
+    int generatedId = nextMedicineId;
+    nextMedicineId++;
+
+    // Persist the counter so deleted IDs are not reused.
+    std::ofstream file("medicine_id_counter.txt");
+
+    if (file)
+    {
+        file << nextMedicineId;
+    }
+    else
+    {
+        std::cout << "Warning: Unable to save medicine ID counter.\n";
+    }
+
+    return generatedId;
 }
 
 // Calculate the bucket index using the medicine ID.
 int HashTable::hashFunction(int id)
 {
-    // The remainder maps the ID to an index from 0 to TABLE_SIZE - 1.
-    return id % TABLE_SIZE;
+    return ((id % TABLE_SIZE) + TABLE_SIZE) % TABLE_SIZE;
 }
 
 // Insert a medicine using separate chaining to handle collisions.
@@ -203,6 +241,60 @@ std::vector<Medicine> HashTable::getAllMedicines()
     return medicines;
 }
 
+bool isValidDateFormat(const std::string &date)
+{
+    if (date.length() != 10 ||
+        date[4] != '-' || date[7] != '-')
+        return false;
+
+    for (int i = 0; i < 10; i++)
+    {
+        if (i == 4 || i == 7)
+            continue;
+
+        if (!std::isdigit(static_cast<unsigned char>(date[i])))
+            return false;
+    }
+
+    int year = std::stoi(date.substr(0, 4));
+    int month = std::stoi(date.substr(5, 2));
+    int day = std::stoi(date.substr(8, 2));
+
+    if (year < 1 || month < 1 || month > 12)
+        return false;
+
+    int daysInMonth[] = {
+        31, 28, 31, 30, 31, 30,
+        31, 31, 30, 31, 30, 31};
+
+    bool leapYear = (year % 400 == 0) ||
+                    (year % 4 == 0 && year % 100 != 0);
+
+    if (leapYear)
+        daysInMonth[1] = 29;
+
+    return day >= 1 && day <= daysInMonth[month - 1];
+}
+
+bool isValidExpiryDate(const std::string &date)
+{
+    if (!isValidDateFormat(date))
+        return false;
+
+    // Reject dates before today's local date
+    // when adding or updating a medicine.
+    std::time_t now = std::time(nullptr);
+    std::tm *today = std::localtime(&now);
+
+    if (today == nullptr)
+        return false;
+
+    std::ostringstream currentDate;
+    currentDate << std::put_time(today, "%Y-%m-%d");
+
+    return date >= currentDate.str();
+}
+
 bool HashTable::saveInventory(const std::string &filename)
 {
     std::ofstream file(filename);
@@ -220,6 +312,22 @@ bool HashTable::saveInventory(const std::string &filename)
              << medicine.name << '\n'
              << medicine.quantity << '\n'
              << medicine.expiryDate << '\n';
+
+        // Stop if writing fails.
+        if (!file)
+        {
+            std::cout << "Error: Failed while writing inventory.\n";
+            return false;
+        }
+    }
+
+    file.close();
+
+    // Check whether closing/flushing the file failed.
+    if (!file)
+    {
+        std::cout << "Error: Failed to finish saving inventory.\n";
+        return false;
     }
 
     return true;
@@ -235,31 +343,77 @@ bool HashTable::loadInventory(const std::string &filename)
         return true;
     }
 
-    Medicine medicine;
+    int loaded = 0;
+    int skipped = 0;
 
-    // Read each medicine's four fields.
-    while (file >> medicine.id)
+    while (true)
     {
-        file.ignore(
-            std::numeric_limits<std::streamsize>::max(), '\n');
+        Medicine medicine;
 
-        if (!std::getline(file, medicine.name) ||
-            !(file >> medicine.quantity) ||
-            !(file >> medicine.expiryDate))
+        // Read the medicine ID.
+        if (!(file >> medicine.id))
         {
-            std::cout << "Error: Invalid inventory file.\n";
+            if (file.eof())
+                break;
+
+            std::cout << "Error: Invalid medicine ID in inventory file.\n";
             return false;
         }
 
         file.ignore(
             std::numeric_limits<std::streamsize>::max(), '\n');
 
-        // Avoid inserting the same ID more than once.
-        if (searchMedicine(medicine.id) == nullptr)
+        // Read the remaining fields.
+        if (!std::getline(file, medicine.name) ||
+            !(file >> medicine.quantity) ||
+            !(file >> medicine.expiryDate))
         {
-            insertMedicine(medicine);
+            std::cout << "Error: Incomplete inventory record.\n";
+            return false;
         }
+
+        file.ignore(
+            std::numeric_limits<std::streamsize>::max(), '\n');
+
+        // Validate the record.
+        if (medicine.id <= 0 ||
+            medicine.name.empty() ||
+            medicine.quantity < 0 ||
+            !isValidDateFormat(medicine.expiryDate))
+        {
+            std::cout << "Skipping invalid medicine record.\n";
+            skipped++;
+            continue;
+        }
+
+        // Avoid duplicate IDs.
+        if (searchMedicine(medicine.id) != nullptr)
+        {
+            std::cout << "Skipping duplicate medicine ID: "
+                      << medicine.id << '\n';
+            skipped++;
+            continue;
+        }
+
+        insertMedicine(medicine);
+        loaded++;
     }
+
+    if (file.bad())
+    {
+        std::cout << "Error: Failed while reading inventory file.\n";
+        return false;
+    }
+
+    std::cout << loaded << " medicine(s) loaded.";
+
+    if (skipped > 0)
+    {
+        std::cout << " " << skipped
+                  << " invalid or duplicate record(s) skipped.";
+    }
+
+    std::cout << '\n';
 
     return true;
 }
@@ -269,9 +423,11 @@ void addMedicine()
 {
     Medicine medicine;
 
-    // Step 1: Read the ID.
-    std::cout << "Enter Medicine ID: ";
-    std::cin >> medicine.id;
+    // Generate and display the medicine ID automatically.
+    medicine.id = inventoryTable.generateMedicineId();
+
+    std::cout << "Generated Medicine ID: "
+              << medicine.id << '\n';
 
     // Step 2: Check the ID immediately.
     if (inventoryTable.searchMedicine(medicine.id) != nullptr)
@@ -286,10 +442,27 @@ void addMedicine()
     std::getline(std::cin >> std::ws, medicine.name);
 
     std::cout << "Enter Quantity: ";
-    std::cin >> medicine.quantity;
+
+    if (!(std::cin >> medicine.quantity) || medicine.quantity < 0)
+    {
+        std::cout << "Invalid quantity. Please enter a non-negative integer.\n";
+
+        std::cin.clear();
+        std::cin.ignore(
+            std::numeric_limits<std::streamsize>::max(), '\n');
+
+        return;
+    }
 
     std::cout << "Enter Expiry Date (YYYY-MM-DD): ";
     std::cin >> medicine.expiryDate;
+
+    if (!isValidExpiryDate(medicine.expiryDate))
+    {
+        std::cout << "Invalid expiry date. "
+                  << "Please use a valid YYYY-MM-DD date.\n";
+        return;
+    }
 
     // Step 4: Insert and record the operation.
     inventoryTable.insertMedicine(medicine);
@@ -299,14 +472,32 @@ void addMedicine()
 }
 
 // User-facing function to search for a medicine.
+
 void searchMedicine()
 {
     int id;
 
     std::cout << "\nEnter Medicine ID to search: ";
-    std::cin >> id;
 
-    // Get a pointer to the matching medicine, if it exists.
+    if (!(std::cin >> id))
+    {
+        std::cout << "Invalid input. Please enter a numeric Medicine ID.\n";
+
+        std::cin.clear();
+        std::cin.ignore(
+            std::numeric_limits<std::streamsize>::max(), '\n');
+
+        return;
+    }
+
+    // Medicine IDs must be positive.
+    if (id <= 0)
+    {
+        std::cout << "Invalid Medicine ID. ID must be positive.\n";
+        return;
+    }
+
+    // Search for the medicine.
     Medicine *medicine = inventoryTable.searchMedicine(id);
 
     if (medicine == nullptr)
@@ -315,61 +506,106 @@ void searchMedicine()
         return;
     }
 
-    // Display the details of the matching medicine.
+    // Display medicine details.
     std::cout << "\nMedicine Found\n";
 
-    std::cout << "ID: "
-              << medicine->id << "\n";
-
-    std::cout << "Name: "
-              << medicine->name << "\n";
-
-    std::cout << "Quantity: "
-              << medicine->quantity << "\n";
-
-    std::cout << "Expiry Date: "
-              << medicine->expiryDate << "\n";
+    std::cout << "ID: " << medicine->id << "\n";
+    std::cout << "Name: " << medicine->name << "\n";
+    std::cout << "Quantity: " << medicine->quantity << "\n";
+    std::cout << "Expiry Date: " << medicine->expiryDate << "\n";
 }
 
 // User-facing function to update a medicine.
+
 void updateMedicine()
 {
     int id;
 
     // Step 1: Ask for the medicine ID.
     std::cout << "Enter Medicine ID to update: ";
-    std::cin >> id;
+
+    if (!(std::cin >> id))
+    {
+        std::cout << "Invalid medicine ID.\n";
+        std::cin.clear();
+        std::cin.ignore(
+            std::numeric_limits<std::streamsize>::max(), '\n');
+        return;
+    }
 
     // Step 2: Search for the medicine.
     Medicine *medicine = inventoryTable.searchMedicine(id);
 
-    // Step 3: Stop if the medicine does not exist.
     if (medicine == nullptr)
     {
         std::cout << "Medicine not found.\n";
         return;
     }
 
-    // Step 4: Ask for new details only if found.
+    // Step 3: Read the new quantity into a temporary variable.
+    int newQuantity;
+
     std::cout << "Enter new Quantity: ";
-    std::cin >> medicine->quantity;
+
+    if (!(std::cin >> newQuantity) || newQuantity < 0)
+    {
+        std::cout << "Invalid quantity. "
+                  << "Please enter a non-negative integer.\n";
+
+        std::cin.clear();
+        std::cin.ignore(
+            std::numeric_limits<std::streamsize>::max(), '\n');
+        return;
+    }
+
+    // Step 4: Read and validate the new expiry date.
+    std::string newExpiryDate;
 
     std::cout << "Enter new Expiry Date (YYYY-MM-DD): ";
-    std::cin >> medicine->expiryDate;
+    std::cin >> newExpiryDate;
 
-    // Step 5: Record the successful update.
+    if (!isValidExpiryDate(newExpiryDate))
+    {
+        std::cout << "Invalid expiry date. "
+                  << "Please enter a valid YYYY-MM-DD date.\n";
+        return;
+    }
+
+    // Step 5: Update only after both inputs are valid.
+    medicine->quantity = newQuantity;
+    medicine->expiryDate = newExpiryDate;
+
+    // Step 6: Record the successful update.
     addHistory("Updated medicine: " + medicine->name);
 
     std::cout << "Medicine updated successfully.\n";
 }
 
 // User-facing function to delete a medicine.
+
 void deleteMedicine()
 {
     int id;
 
     std::cout << "\nEnter Medicine ID to delete: ";
-    std::cin >> id;
+
+    if (!(std::cin >> id))
+    {
+        std::cout << "Invalid input. Please enter a numeric Medicine ID.\n";
+
+        std::cin.clear();
+        std::cin.ignore(
+            std::numeric_limits<std::streamsize>::max(), '\n');
+
+        return;
+    }
+
+    // Medicine IDs must be positive.
+    if (id <= 0)
+    {
+        std::cout << "Invalid Medicine ID. ID must be positive.\n";
+        return;
+    }
 
     // Attempt to remove the medicine from the hash table.
     bool deleted = inventoryTable.deleteMedicine(id);

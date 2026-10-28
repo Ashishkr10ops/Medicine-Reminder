@@ -5,6 +5,10 @@
 
 #include <iostream>
 #include <utility>
+#include <string>
+#include <cctype>
+#include <fstream>
+#include <sstream>
 
 // Define the shared reminder queue.
 ReminderQueue reminderQueue;
@@ -12,6 +16,27 @@ ReminderQueue reminderQueue;
 // Constructor: the vector is initially empty.
 ReminderQueue::ReminderQueue()
 {
+}
+
+bool isValidReminderTime(const std::string &time)
+{
+    if (time.length() != 5 || time[2] != ':')
+        return false;
+
+    for (int i = 0; i < 5; i++)
+    {
+        if (i == 2)
+            continue;
+
+        if (!std::isdigit(static_cast<unsigned char>(time[i])))
+            return false;
+    }
+
+    int hour = std::stoi(time.substr(0, 2));
+    int minute = std::stoi(time.substr(3, 2));
+
+    return hour >= 0 && hour <= 23 &&
+           minute >= 0 && minute <= 59;
 }
 
 // Move a newly inserted reminder upward to restore min-heap order.
@@ -157,6 +182,126 @@ int ReminderQueue::removeRemindersForMedicine(int medicineId)
         heapifyDown(i);
 
     return removed;
+}
+
+void ReminderQueue::saveToFile(const std::string &filename)
+{
+    std::ofstream file(filename);
+
+    if (!file)
+    {
+        std::cout << "Error: Unable to save reminders to file.\n";
+        return;
+    }
+
+    // Save each reminder as: ID|Name|Time
+    for (const Reminder &reminder : heap)
+    {
+        file << reminder.medicineId << '|'
+             << reminder.medicineName << '|'
+             << reminder.reminderTime << '\n';
+    }
+
+    file.close();
+
+    if (!file)
+    {
+        std::cout << "Error: Failed while writing reminders to file.\n";
+        return;
+    }
+
+    std::cout << "Reminders saved successfully.\n";
+}
+
+void ReminderQueue::loadFromFile(const std::string &filename)
+{
+    std::ifstream file(filename);
+
+    // A missing file is normal on the first run.
+    if (!file)
+    {
+        std::ifstream checkFile(filename);
+
+        if (checkFile.good())
+        {
+            std::cout << "Error: Unable to read reminders file.\n";
+        }
+
+        return;
+    }
+
+    std::string line;
+    int loaded = 0;
+    int skipped = 0;
+
+    while (std::getline(file, line))
+    {
+        std::stringstream ss(line);
+        std::string idText, medicineName, reminderTime;
+
+        if (!std::getline(ss, idText, '|') ||
+            !std::getline(ss, medicineName, '|') ||
+            !std::getline(ss, reminderTime) ||
+            medicineName.empty())
+        {
+            std::cout << "Skipping invalid reminder record.\n";
+            skipped++;
+            continue;
+        }
+
+        int medicineId;
+
+        try
+        {
+            std::size_t pos = 0;
+            medicineId = std::stoi(idText, &pos);
+
+            if (pos != idText.size() ||
+                medicineId <= 0 ||
+                !isValidReminderTime(reminderTime))
+            {
+                std::cout << "Skipping invalid reminder record.\n";
+                skipped++;
+                continue;
+            }
+        }
+        catch (const std::exception &)
+        {
+            std::cout << "Skipping invalid reminder record.\n";
+            skipped++;
+            continue;
+        }
+
+        Reminder reminder;
+        reminder.medicineId = medicineId;
+        reminder.medicineName = medicineName;
+        reminder.reminderTime = reminderTime;
+
+        heap.push_back(reminder);
+        loaded++;
+    }
+
+    // Check for an actual read failure.
+    if (file.bad())
+    {
+        std::cout << "Error: A problem occurred while reading reminders.\n";
+    }
+
+    // Restore min-heap order.
+    for (int i = static_cast<int>(heap.size()) / 2 - 1; i >= 0; i--)
+    {
+        heapifyDown(i);
+    }
+
+    std::cout << loaded << " reminder(s) loaded.";
+
+    if (skipped > 0)
+    {
+        std::cout << " " << skipped
+                  << " invalid record(s) skipped.";
+    }
+
+    std::cout << '\n';
 }
 
 // Add a reminder after checking for known drug conflicts.
