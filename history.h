@@ -4,62 +4,67 @@
 
 #include <string>
 
-// Stores the description of one operation performed in the system.
+// Stores the description of a single operation performed in the system.
 struct History
 {
     std::string operation;
 };
 
-// Node used to implement the history stack as a linked list.
+// Node of the linked list used to implement the history stack.
 struct HistoryNode
 {
-    History history;
-    HistoryNode *next;
+    History history;   // Operation stored in this node.
+    HistoryNode *next; // Pointer to the next node below it.
 };
 
-// Stack that stores operations in Last In, First Out (LIFO) order.
+// Implements a stack using a singly linked list.
+// Follows LIFO (Last In, First Out): the newest operation is processed first.
 class HistoryStack
 {
 private:
-    // Points to the most recently added operation.
-    HistoryNode *top;
+    HistoryNode *top; // Points to the most recently added operation.
 
 public:
     // Initializes an empty stack.
     HistoryStack();
 
-    // Adds a new operation to the top of the stack.
+    // Pushes an operation onto the top of the stack. O(1).
     void push(const History &history);
 
-    // Removes the top operation; returns false if the stack is empty.
+    // Removes the top operation; returns false if the stack is empty. O(1).
     bool pop();
 
-    // Returns the top operation without removing it.
+    // Returns a pointer to the top operation without removing it.
+    // Returns nullptr if the stack is empty.
     History *peek();
 
-    // Displays operations from newest to oldest.
+    // Displays all operations from newest to oldest. O(n).
     void display();
 
-    // Saves the stack history to a file.
+    // Writes stack entries to a file for persistent storage.
     void saveToFile(const std::string &filename);
 
-    // Loads history from a file.
+    // Reads entries from a file and restores the stack.
     void loadFromFile(const std::string &filename);
 
-    // Destructor to prevent memory leaks.
+    // Frees all dynamically allocated nodes to prevent memory leaks.
     ~HistoryStack();
 };
 
-// Shared stack object defined in history.cpp.
+// Shared history stack used by the application's modules.
+// Its definition is in history.cpp.
 extern HistoryStack historyStack;
 
 // User-facing function to manually record an operation.
 void recordOperation();
 
-// Displays the operation history.
+// Displays the recorded operation history.
 void viewHistory();
 
-// Allows other modules to add operations to the history stack.
+// Adds an operation to the stack from another module.
 void addHistory(const std::string &operation);
+
+// Removes all history entries and saves the empty history.
+void clearHistory();
 
 #endif

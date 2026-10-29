@@ -1,1 +1,4 @@
-100|Paracetamol|10:30
+100|Paracetamol|DAILY|0|2026-10-30|10:00
+100|Paracetamol|DAILY|0|2026-10-30|10:30
+100|Paracetamol|DAILY|0|2026-11-10|20:00
+104|Flourine|INTERVAL|7|2026-10-30|10:30

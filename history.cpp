@@ -4,70 +4,53 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <limits>
 
-// Define the shared history stack declared in history.h.
+// Shared history stack used throughout the application.
 HistoryStack historyStack;
 
-// Constructor: initialize the stack as empty.
+// Initialize an empty stack.
 HistoryStack::HistoryStack()
 {
     top = nullptr;
 }
 
-// Push a new operation onto the top of the stack.
+// Push an operation onto the stack (O(1)).
 void HistoryStack::push(const History &history)
 {
-    // Allocate memory for a new stack node.
+    // Create a new node and link it to the current top.
     HistoryNode *newNode = new HistoryNode;
-
     newNode->history = history;
-
-    // Link the new node to the previous top node.
     newNode->next = top;
 
-    // Make the new node the top of the stack.
+    // The new node becomes the top of the stack.
     top = newNode;
 }
 
-// Remove the most recently added operation.
+// Remove the most recently recorded operation (O(1)).
 bool HistoryStack::pop()
 {
-    // An empty stack has no operation to remove.
     if (top == nullptr)
     {
-        return false;
+        return false; // Stack underflow: nothing to remove.
     }
 
-    // Temporarily store the current top node.
     HistoryNode *temp = top;
-
-    // Move the top pointer to the next node.
     top = top->next;
 
-    // Free the memory of the removed node.
-    delete temp;
-
+    delete temp; // Release the removed node's memory.
     return true;
 }
 
-// Return the latest operation without removing it.
+// Return the top operation without removing it (O(1)).
 History *HistoryStack::peek()
 {
-    // Return nullptr when the stack contains no elements.
-    if (top == nullptr)
-    {
-        return nullptr;
-    }
-
-    // Return the address of the operation at the top.
-    return &top->history;
+    return (top == nullptr) ? nullptr : &top->history;
 }
 
-// Display the history from newest operation to oldest.
+// Display operations from newest to oldest.
+// Time complexity: O(n), where n is the number of history entries.
 void HistoryStack::display()
 {
-    // Handle the case where no operations have been recorded.
     if (top == nullptr)
     {
         std::cout << "History is empty.\n";
@@ -76,34 +59,29 @@ void HistoryStack::display()
 
     std::cout << "\n===== History =====\n";
 
-    // Start traversing from the top of the stack.
+    // Traverse the linked stack from top to bottom.
     HistoryNode *current = top;
 
     while (current != nullptr)
     {
-        // Display the operation stored in the current node.
-        std::cout << current->history.operation << "\n";
-
-        // Move to the next older operation.
+        std::cout << current->history.operation << '\n';
         current = current->next;
     }
 }
 
+// Save history to a file so it can be restored in a future session.
 void HistoryStack::saveToFile(const std::string &filename)
 {
-    std::cout << "\nSaving history to: " << filename << '\n';
-
     std::ofstream file(filename);
 
     if (!file.is_open())
     {
-        std::cout << "ERROR: Could not open history file for writing.\n";
+        std::cerr << "Error: Could not open history file for writing.\n";
         return;
     }
 
-    // Collect operations from newest to oldest.
+    // Collect entries from newest to oldest.
     std::vector<std::string> operations;
-
     HistoryNode *current = top;
 
     while (current != nullptr)
@@ -112,7 +90,7 @@ void HistoryStack::saveToFile(const std::string &filename)
         current = current->next;
     }
 
-    // Save oldest to newest so loading restores stack order.
+    // Write oldest to newest so loading restores the original stack order.
     for (auto it = operations.rbegin(); it != operations.rend(); ++it)
     {
         file << *it << '\n';
@@ -120,81 +98,103 @@ void HistoryStack::saveToFile(const std::string &filename)
 
     file.close();
 
-    if (file.fail())
+    if (!file)
     {
-        std::cout << "ERROR: Failed while writing history.\n";
-        return;
+        std::cerr << "Error: Failed to save history completely.\n";
     }
-
-    std::cout << "History saved successfully. Entries: "
-              << operations.size() << '\n';
 }
 
+// Restore history from a file.
+// The newest operation ends up at the top of the stack.
 void HistoryStack::loadFromFile(const std::string &filename)
 {
     std::ifstream file(filename);
 
-    // If the file does not exist yet, start with empty history.
+    // A missing history file is normal on the first run.
     if (!file.is_open())
+    {
         return;
+    }
 
-    // Avoid duplicating entries if loading is called again.
+    // Read entries first so an input error does not erase current history.
+    std::vector<std::string> operations;
+    std::string operation;
+
+    while (std::getline(file, operation))
+    {
+        if (!operation.empty())
+        {
+            operations.push_back(operation);
+        }
+    }
+
+    if (file.bad())
+    {
+        std::cerr << "Error: Failed while reading history file.\n";
+        return;
+    }
+
+    file.close();
+
+    // Replace the current stack with the successfully read entries.
     while (pop())
     {
     }
 
-    std::string operation;
-
-    // File entries are stored oldest to newest.
-    while (std::getline(file, operation))
+    // The file is oldest-first, so pushing in this order restores the stack.
+    for (const std::string &entry : operations)
     {
         History history;
-        history.operation = operation;
+        history.operation = entry;
         push(history);
     }
-
-    file.close();
 }
 
-// Allow the user to manually enter a history operation.
+// Allow a user to manually add an operation to the history.
 void recordOperation()
 {
     History history;
 
     std::cout << "\nEnter operation: ";
 
-    // Ignore the leftover newline before reading a full line.
-    std::cin.ignore();
+    // Read the entire description, including spaces.
+    std::getline(std::cin >> std::ws, history.operation);
 
-    // Read the operation, including spaces.
-    std::getline(std::cin, history.operation);
-
-    // Store the operation at the top of the stack.
     historyStack.push(history);
-
     std::cout << "Operation recorded successfully.\n";
 }
 
-// Display the complete operation history.
+// Display the recorded operations.
 void viewHistory()
 {
     historyStack.display();
 }
 
-// Add an operation to history from another module.
+// Add an operation from another module, such as inventory management.
 void addHistory(const std::string &operation)
 {
     History history;
-
-    // Store the supplied operation description.
     history.operation = operation;
-
-    // Push it onto the stack so it becomes the newest entry.
     historyStack.push(history);
 }
 
+// Clear the stack and persist the empty history.
+void clearHistory()
+{
+    while (historyStack.pop())
+    {
+        // Continue until the stack is empty.
+    }
+
+    historyStack.saveToFile("history.txt");
+    std::cout << "History cleared successfully.\n";
+}
+
+// Release all dynamically allocated stack nodes.
 HistoryStack::~HistoryStack()
 {
     while (pop())
-        ;
+    {
+        // Each pop deletes one node.
+    }
 }

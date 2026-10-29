@@ -5,84 +5,97 @@
 #include <string>
 #include <vector>
 
-// Stores the details of a medicine.
+// Stores all information associated with a medicine.
 struct Medicine
 {
-    int id;
-    std::string name;
-    int quantity;
-    std::string expiryDate;
+    int id;                 // Unique identifier for the medicine.
+    std::string name;       // Name of the medicine.
+    int quantity;           // Available stock.
+    std::string expiryDate; // Expiry date in YYYY-MM-DD format.
 };
 
-// Each node stores one medicine and a pointer to the next node.
-// Nodes are linked together to handle hash table collisions.
+// Node used in the linked list for separate chaining.
+// Multiple nodes can belong to the same hash table bucket.
 struct Node
 {
-    Medicine medicine;
-    Node *next;
+    Medicine medicine; // Medicine record stored in this node.
+    Node *next;        // Pointer to the next node in the chain.
 };
 
-// Hash table for storing and managing medicine records.
+// Hash table that manages medicine records using medicine IDs.
+// Collisions are handled using separate chaining with linked lists.
 class HashTable
 {
-
 private:
-    // Total number of buckets in the hash table.
+    // Number of buckets in the hash table.
     static const int TABLE_SIZE = 10;
 
-    // Each bucket points to the first node of its linked list.
+    // Each array element points to the head of a linked list.
     Node *table[TABLE_SIZE];
 
-    // Stores the next medicine ID to assign automatically.
+    // Counter used to generate medicine IDs automatically.
     int nextMedicineId;
 
-    // Converts a medicine ID into a valid bucket index.
+    // Maps a medicine ID to a valid bucket index.
+    // The hash function is implemented in inventory.cpp.
     int hashFunction(int id);
 
 public:
-    // Initializes all hash table buckets as empty.
+    // Initializes the hash table with empty buckets.
     HashTable();
 
-    // Generates and returns the next unique medicine ID.
+    // Generates the next medicine ID.
     int generateMedicineId();
 
-    // Adds a medicine to the appropriate bucket.
+    // Inserts a medicine into its corresponding hash table bucket.
+    // Separate chaining handles collisions between medicine IDs.
     void insertMedicine(const Medicine &medicine);
 
-    // Searches for a medicine by ID; returns nullptr if not found.
+    // Searches for a medicine by ID.
+    // Returns a pointer to the record, or nullptr if it is not found.
     Medicine *searchMedicine(int id);
 
-    // Updates quantity and expiry date; returns success status.
+    // Updates the quantity and expiry date of an existing medicine.
+    // Returns true if the update succeeds; otherwise, false.
     bool updateMedicine(int id, int quantity,
                         const std::string &expiryDate);
 
-    // Deletes a medicine by ID; returns success status.
+    // Removes a medicine from the hash table.
+    // Returns true if the medicine is deleted successfully.
     bool deleteMedicine(int id);
 
-    // Displays every medicine stored in the hash table.
+    // Displays all medicine records stored in the hash table.
     void displayInventory();
 
-    // Returns all medicine records for use by other modules.
+    // Returns a vector containing the current medicine records.
+    // Useful when other modules need to access inventory data.
     std::vector<Medicine> getAllMedicines();
 
-    // Saves all medicines to a file.
+    // Saves the inventory records to the specified file.
+    // Returns the success status of the file operation.
     bool saveInventory(const std::string &filename);
 
-    // Loads medicines from a file.
+    // Loads inventory records from the specified file.
+    // Returns the success status of the loading operation.
     bool loadInventory(const std::string &filename);
-    ~HashTable(); // Destructor to prevent memory leak
+
+    // Releases dynamically allocated linked-list nodes.
+    // Prevents memory leaks when the hash table is destroyed.
+    ~HashTable();
 };
 
-// Shared inventory object used across the project.
-// The actual object is defined in inventory.cpp.
+// Shared inventory instance used by other project modules.
+// Its definition is located in inventory.cpp.
 extern HashTable inventoryTable;
 
-// User-facing functions called from the main menu.
+// Functions called by the main menu for inventory operations.
 void addMedicine();
 void searchMedicine();
 void updateMedicine();
 void deleteMedicine();
 void displayInventory();
+
+// Validates a calendar date in YYYY-MM-DD format.
 bool isValidDateFormat(const std::string &date);
 
 #endif

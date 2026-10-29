@@ -1,3 +1,7 @@
+// Medicine inventory module
+// Implements a hash table with separate chaining. Each bucket stores a
+// linked list of medicine records, allowing collisions to be handled safely.
+// Inventory data and the next generated medicine ID are persisted in files.
 
 #include "inventory.h"
 #include "history.h"
@@ -11,6 +15,8 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
+#include <vector>
 
 // Define the shared inventory object declared in inventory.h.
 HashTable inventoryTable;
@@ -25,47 +31,74 @@ HashTable::HashTable() : nextMedicineId(100)
 
     // Restore the next ID from the previous run.
     std::ifstream file("medicine_id_counter.txt");
+    int savedId;
 
-    if (file >> nextMedicineId && nextMedicineId < 100)
+    if (file >> savedId)
     {
+        if (savedId >= 100)
+        {
+            nextMedicineId = savedId;
+        }
+        else
+        {
+            std::cout << "Warning: Invalid medicine ID counter. "
+                      << "Starting from ID 100.\n";
+            nextMedicineId = 100;
+        }
+    }
+    else
+    {
+        std::cout << "Warning: Unable to read medicine ID counter. "
+                  << "Starting from ID 100.\n";
         nextMedicineId = 100;
     }
 }
 
 // Generate a unique medicine ID and save the counter.
+
 int HashTable::generateMedicineId()
 {
-    // Skip IDs that are already present in the inventory.
+    // Skip IDs that already exist in the inventory.
     while (searchMedicine(nextMedicineId) != nullptr)
     {
         nextMedicineId++;
     }
 
     int generatedId = nextMedicineId;
+
+    // Advance the counter before returning the generated ID.
     nextMedicineId++;
 
-    // Persist the counter so deleted IDs are not reused.
+    // Save the next available ID.
     std::ofstream file("medicine_id_counter.txt");
 
-    if (file)
+    if (!file)
     {
-        file << nextMedicineId;
+        std::cout << "Warning: Unable to save medicine ID counter.\n";
     }
     else
     {
-        std::cout << "Warning: Unable to save medicine ID counter.\n";
+        file << nextMedicineId;
+        file.close();
+
+        if (!file)
+        {
+            std::cout << "Warning: Failed to finish saving medicine ID counter.\n";
+        }
     }
 
     return generatedId;
 }
 
 // Calculate the bucket index using the medicine ID.
+// Modulo maps the ID to one of TABLE_SIZE buckets.
 int HashTable::hashFunction(int id)
 {
     return ((id % TABLE_SIZE) + TABLE_SIZE) % TABLE_SIZE;
 }
 
 // Insert a medicine using separate chaining to handle collisions.
+// If a bucket is occupied, append the new node to that bucket's linked list.
 void HashTable::insertMedicine(const Medicine &medicine)
 {
     // Find the bucket where this medicine should be stored.
@@ -96,6 +129,8 @@ void HashTable::insertMedicine(const Medicine &medicine)
 }
 
 // Search for a medicine by ID.
+// Average lookup is efficient when records are distributed across buckets;
+// in the worst case, the entire linked list in one bucket must be traversed.
 Medicine *HashTable::searchMedicine(int id)
 {
     // Search only the bucket associated with this ID.
@@ -140,6 +175,7 @@ bool HashTable::updateMedicine(
 }
 
 // Delete a medicine from its hash table bucket.
+// The previous pointer allows the matching node to be unlinked from the chain.
 bool HashTable::deleteMedicine(int id)
 {
     int index = hashFunction(id);
@@ -180,42 +216,36 @@ bool HashTable::deleteMedicine(int id)
 }
 
 // Display all medicines by traversing every bucket and its chain.
+
 void HashTable::displayInventory()
 {
-    bool isEmpty = true;
+    // Get all medicines from the hash table.
+    std::vector<Medicine> medicines = getAllMedicines();
+
+    if (medicines.empty())
+    {
+        std::cout << "Inventory is empty.\n";
+        return;
+    }
+
+    // Sort medicines by ID in ascending order.
+    std::sort(
+        medicines.begin(),
+        medicines.end(),
+        [](const Medicine &a, const Medicine &b)
+        {
+            return a.id < b.id;
+        });
 
     std::cout << "\n===== Medicine Inventory =====\n";
 
-    for (int i = 0; i < TABLE_SIZE; i++)
+    for (const Medicine &medicine : medicines)
     {
-        Node *current = table[i];
-
-        while (current != nullptr)
-        {
-            isEmpty = false;
-
-            std::cout << "ID: "
-                      << current->medicine.id << "\n";
-
-            std::cout << "Name: "
-                      << current->medicine.name << "\n";
-
-            std::cout << "Quantity: "
-                      << current->medicine.quantity << "\n";
-
-            std::cout << "Expiry Date: "
-                      << current->medicine.expiryDate << "\n";
-
-            std::cout << "-----------------------------\n";
-
-            current = current->next;
-        }
-    }
-
-    // Print a message if no medicine records were found.
-    if (isEmpty)
-    {
-        std::cout << "Inventory is empty.\n";
+        std::cout << "ID: " << medicine.id << '\n';
+        std::cout << "Name: " << medicine.name << '\n';
+        std::cout << "Quantity: " << medicine.quantity << '\n';
+        std::cout << "Expiry Date: " << medicine.expiryDate << '\n';
+        std::cout << "-----------------------------\n";
     }
 }
 
@@ -241,6 +271,8 @@ std::vector<Medicine> HashTable::getAllMedicines()
     return medicines;
 }
 
+// Validate the YYYY-MM-DD format and the actual number of days in the month.
+// Leap years follow the Gregorian calendar rule.
 bool isValidDateFormat(const std::string &date)
 {
     if (date.length() != 10 ||
@@ -276,6 +308,7 @@ bool isValidDateFormat(const std::string &date)
     return day >= 1 && day <= daysInMonth[month - 1];
 }
 
+// An expiry date must be a valid calendar date and cannot be before today.
 bool isValidExpiryDate(const std::string &date)
 {
     if (!isValidDateFormat(date))
@@ -295,6 +328,7 @@ bool isValidExpiryDate(const std::string &date)
     return date >= currentDate.str();
 }
 
+// Persist each medicine as four lines: ID, name, quantity, and expiry date.
 bool HashTable::saveInventory(const std::string &filename)
 {
     std::ofstream file(filename);
@@ -333,6 +367,8 @@ bool HashTable::saveInventory(const std::string &filename)
     return true;
 }
 
+// Restore medicine records from the inventory file.
+// Invalid records and duplicate IDs are skipped; file I/O errors are reported.
 bool HashTable::loadInventory(const std::string &filename)
 {
     std::ifstream file(filename);
@@ -342,9 +378,6 @@ bool HashTable::loadInventory(const std::string &filename)
     {
         return true;
     }
-
-    int loaded = 0;
-    int skipped = 0;
 
     while (true)
     {
@@ -382,7 +415,6 @@ bool HashTable::loadInventory(const std::string &filename)
             !isValidDateFormat(medicine.expiryDate))
         {
             std::cout << "Skipping invalid medicine record.\n";
-            skipped++;
             continue;
         }
 
@@ -391,12 +423,16 @@ bool HashTable::loadInventory(const std::string &filename)
         {
             std::cout << "Skipping duplicate medicine ID: "
                       << medicine.id << '\n';
-            skipped++;
             continue;
         }
 
         insertMedicine(medicine);
-        loaded++;
+
+        // Update the next ID if the loaded medicine ID is greater.
+        if (medicine.id >= nextMedicineId)
+        {
+            nextMedicineId = medicine.id + 1;
+        }
     }
 
     if (file.bad())
@@ -405,15 +441,23 @@ bool HashTable::loadInventory(const std::string &filename)
         return false;
     }
 
-    std::cout << loaded << " medicine(s) loaded.";
+    // Save the corrected next medicine ID.
+    std::ofstream counterFile("medicine_id_counter.txt");
 
-    if (skipped > 0)
+    if (!counterFile)
     {
-        std::cout << " " << skipped
-                  << " invalid or duplicate record(s) skipped.";
+        std::cout << "Warning: Unable to save medicine ID counter.\n";
     }
+    else
+    {
+        counterFile << nextMedicineId;
+        counterFile.close();
 
-    std::cout << '\n';
+        if (!counterFile)
+        {
+            std::cout << "Warning: Failed to finish saving medicine ID counter.\n";
+        }
+    }
 
     return true;
 }
@@ -634,6 +678,7 @@ void displayInventory()
     inventoryTable.displayInventory();
 }
 
+// Release every dynamically allocated node when the hash table is destroyed.
 HashTable::~HashTable()
 {
     for (int i = 0; i < TABLE_SIZE; i++)

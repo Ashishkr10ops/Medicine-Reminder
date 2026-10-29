@@ -8,32 +8,31 @@
 #include <cstdio>
 #include <string>
 
-// Define the shared alert manager.
+// Shared alert manager used by the application.
 AlertManager alertManager;
 
-// Constructor: initialize the alert list as empty.
+// Initialize an empty linked list of alerts.
 AlertManager::AlertManager()
 {
     head = nullptr;
 }
 
-// Add a new alert to the linked list.
+// Append an alert to the end of the linked list.
+// Time complexity: O(n), because the list is traversed to find its last node.
 void AlertManager::addAlert(const Alert &alert)
 {
-    // Create a new node to store the alert.
     AlertNode *newNode = new AlertNode;
-
     newNode->alert = alert;
     newNode->next = nullptr;
 
-    // If the list is empty, the new node becomes the head.
+    // If the list is empty, the new node becomes the first node.
     if (head == nullptr)
     {
         head = newNode;
         return;
     }
 
-    // Traverse the list to find its last node.
+    // Find the last node and append the new alert.
     AlertNode *current = head;
 
     while (current->next != nullptr)
@@ -41,14 +40,13 @@ void AlertManager::addAlert(const Alert &alert)
         current = current->next;
     }
 
-    // Link the new alert at the end of the list.
     current->next = newNode;
 }
 
-// Display all alerts stored in the linked list.
+// Display all generated alerts by traversing the linked list.
+// Time complexity: O(n), where n is the number of alerts.
 void AlertManager::displayAlerts()
 {
-    // Handle the case where no alerts exist.
     if (head == nullptr)
     {
         std::cout << "\nNo alerts.\n";
@@ -57,60 +55,50 @@ void AlertManager::displayAlerts()
 
     std::cout << "\n===== Alerts =====\n";
 
-    // Start traversing from the first alert.
     AlertNode *current = head;
 
     while (current != nullptr)
     {
-        // Display the medicine ID and its alert message.
         std::cout << "Medicine ID: "
-                  << current->alert.medicineId << "\n";
+                  << current->alert.medicineId << '\n';
 
         std::cout << "Alert: "
-                  << current->alert.message << "\n";
+                  << current->alert.message << '\n';
 
         std::cout << "-----------------------------\n";
 
-        // Move to the next alert node.
         current = current->next;
     }
 }
 
-// Remove every existing alert and release its memory.
+// Delete every alert node and release its dynamically allocated memory.
 void AlertManager::clearAlerts()
 {
     while (head != nullptr)
     {
-        // Temporarily save the first node.
         AlertNode *temp = head;
-
-        // Move the head pointer to the next node.
         head = head->next;
-
-        // Free the memory occupied by the removed node.
         delete temp;
     }
 }
 
-// Check whether a medicine's expiry date is before today's date.
-// Expected date format: YYYY-MM-DD.
+// Return true if the supplied expiry date is before today's local date.
+// Expected format: YYYY-MM-DD.
 bool isExpired(const std::string &expiryDate)
 {
     int year, month, day;
     char extra;
 
-    // Extract the date and reject extra characters.
-    if (sscanf(
-            expiryDate.c_str(),
-            "%d-%d-%d%c",
-            &year, &month, &day, &extra) != 3)
+    // Parse the date and reject trailing characters.
+    if (sscanf(expiryDate.c_str(), "%d-%d-%d%c",
+               &year, &month, &day, &extra) != 3)
     {
         std::cout << "Invalid expiry date format. "
                   << "Use YYYY-MM-DD.\n";
         return false;
     }
 
-    // Validate the month and day ranges.
+    // Check basic month and day ranges before indexing daysInMonth.
     if (month < 1 || month > 12 ||
         day < 1 || day > 31)
     {
@@ -118,12 +106,12 @@ bool isExpired(const std::string &expiryDate)
         return false;
     }
 
-    // Validate the number of days in the given month.
+    // Number of days in each month; February is adjusted for leap years.
     int daysInMonth[] = {
         31, 28, 31, 30, 31, 30,
         31, 31, 30, 31, 30, 31};
 
-    // Account for leap years.
+    // A leap year is divisible by 400, or by 4 but not by 100.
     bool leapYear = (year % 400 == 0) ||
                     (year % 4 == 0 && year % 100 != 0);
 
@@ -138,7 +126,7 @@ bool isExpired(const std::string &expiryDate)
         return false;
     }
 
-    // Obtain the current local date.
+    // Obtain the current local date from the system clock.
     time_t currentTime = time(nullptr);
     tm *currentDate = localtime(&currentTime);
 
@@ -152,7 +140,7 @@ bool isExpired(const std::string &expiryDate)
     int currentMonth = currentDate->tm_mon + 1;
     int currentDay = currentDate->tm_mday;
 
-    // Compare the expiry date with today's date.
+    // Compare year, month, and day in chronological order.
     if (year < currentYear)
         return true;
 
@@ -164,60 +152,53 @@ bool isExpired(const std::string &expiryDate)
         day < currentDay)
         return true;
 
+    // Today's date and future dates are not considered expired.
     return false;
 }
 
-// Check every medicine for low-stock and expiry conditions.
+// Generate alerts for low-stock and expired medicines.
 void checkAlerts()
 {
     const int LOW_STOCK_THRESHOLD = 5;
 
-    // Clear alerts from the previous check to avoid stale results.
+    // Rebuild the alert list so old alerts do not remain after inventory changes.
     alertManager.clearAlerts();
 
-    // Retrieve medicine records from the Inventory module.
-    std::vector<Medicine> medicines =
-        inventoryTable.getAllMedicines();
+    // Obtain the current medicine records from the inventory hash table.
+    std::vector<Medicine> medicines = inventoryTable.getAllMedicines();
 
-    // Examine each medicine independently.
     for (const Medicine &medicine : medicines)
     {
-        // Generate an alert when the quantity is 5 or less.
+        // Alert when the available quantity is at or below the threshold.
         if (medicine.quantity <= LOW_STOCK_THRESHOLD)
         {
             Alert alert;
-
             alert.medicineId = medicine.id;
-            alert.message =
-                "Low stock: " + medicine.name;
+            alert.message = "Low stock: " + medicine.name;
 
-            // Store the generated alert in the linked list.
             alertManager.addAlert(alert);
         }
 
-        // Generate a separate alert if the medicine has expired.
+        // Check expiry independently; one medicine can trigger both alerts.
         if (isExpired(medicine.expiryDate))
         {
             Alert alert;
-
             alert.medicineId = medicine.id;
-            alert.message =
-                "Medicine expired: " + medicine.name;
+            alert.message = "Medicine expired: " + medicine.name;
 
-            // A medicine can have both low-stock and expiry alerts.
             alertManager.addAlert(alert);
         }
     }
-
-    std::cout << "Alert check completed.\n";
 }
 
-// User-facing function to display the generated alerts.
+// User-facing function to display the current alerts.
 void displayAlerts()
 {
     alertManager.displayAlerts();
 }
 
-AlertManager::~AlertManager() {
+// Release all remaining alert nodes when the manager is destroyed.
+AlertManager::~AlertManager()
+{
     clearAlerts();
 }
